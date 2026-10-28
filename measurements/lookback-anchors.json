@@ -1,0 +1,109 @@
+{
+  "by_window": [
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 192077,
+        "amount_missed_cents": 1704849518,
+        "credits_missed": 3110
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 7
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 177185,
+        "amount_missed_cents": 458902059,
+        "credits_missed": 1197
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 30
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 129255,
+        "amount_missed_cents": 62731489,
+        "credits_missed": 659
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 60
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 67036,
+        "amount_missed_cents": 28211420,
+        "credits_missed": 333
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 90
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 33413,
+        "amount_missed_cents": 20333779,
+        "credits_missed": 168
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 105
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 8550,
+        "amount_missed_cents": 2004368,
+        "credits_missed": 43
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 124
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 0,
+        "amount_missed_cents": 0,
+        "credits_missed": 0
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 180
+    },
+    {
+      "invoice_date_anchor": {
+        "allocation_rows_left_wrong": 0,
+        "amount_missed_cents": 0,
+        "credits_missed": 0
+      },
+      "posted_date_anchor": {
+        "credits_missed": 0,
+        "why": "no credit in this corpus is posted before one already loaded"
+      },
+      "window_days": 365
+    }
+  ],
+  "credits_posted_out_of_arrival_order": 0,
+  "invoice_to_posting_lag_days": {
+    "max": 164,
+    "median": 18,
+    "min": 2,
+    "p95": 105
+  },
+  "placeable_credits": 3582,
+  "rebuilt_by": "python3 scripts/lookback_probe.py"
+}

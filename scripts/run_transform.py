@@ -54,6 +54,8 @@ PAIR = ("scan_margin_lines_unclustered", "scan_margin_lines_clustered")
 
 MART_TABLES = (
     "main_marts.dim_product_version",
+    "main_marts.fct_credit_allocation",
+    "main_marts.credit_rollup_by_line",
     "main_marts.fct_invoice_line_margin",
     "main_marts.fct_credit_memo",
     "main_marts.margin_by_vendor",
@@ -76,6 +78,31 @@ def dbt(args: list[str], db_path: Path, target: str) -> subprocess.CompletedProc
         env=env,
         capture_output=True,
         text=True,
+    )
+
+
+def build_result(stdout: str) -> dict:
+    """The counts off dbt's own summary line, found by name rather than position.
+
+    This used to print the last line of stdout and call it the result. It read
+    correctly for as long as the summary happened to be last, and then a
+    deprecation notice moved in behind it and the run started reporting the word
+    "parsing." as its outcome. An exit status of zero was the only thing
+    actually being checked.
+    """
+    for line in stdout.splitlines():
+        if "Done." in line and "PASS=" in line:
+            counts = {}
+            for token in line.split("Done.", 1)[1].split():
+                if "=" in token:
+                    key, _, value = token.partition("=")
+                    if value.isdigit():
+                        counts[key.lower()] = int(value)
+            if "pass" in counts:
+                return counts
+    raise SystemExit(
+        "dbt printed no summary line, so there is no result to report:\n"
+        + stdout[-2000:]
     )
 
 
@@ -157,6 +184,53 @@ def duckdb_shape(db_path: Path) -> dict:
             "sum(case when product_version_unresolved then 1 else 0 end) "
             "from main_marts.fct_invoice_line_margin"
         ).fetchone()
+        scopes = con.execute(
+            "select allocation_scope, count(*), count(distinct credit_id), "
+            "sum(allocated_cents) "
+            "from main_marts.fct_credit_allocation group by 1 order by 1"
+        ).fetchall()
+        # The identity that makes the table trustworthy. Every credit's parts
+        # add back to the credit, in whole cents, with no tolerance.
+        off_by = con.execute(
+            "with parts as ("
+            "  select credit_id, sum(allocated_cents) as cents "
+            "  from main_marts.fct_credit_allocation group by 1), "
+            "whole as ("
+            "  select credit_id, cast(round(amount_usd * 100) as bigint) as cents "
+            "  from main_marts.fct_credit_memo) "
+            "select count(*) from parts join whole using (credit_id) "
+            "where parts.cents <> whole.cents"
+        ).fetchone()[0]
+        stages = con.execute(
+            "select "
+            "cast(round(sum(invoiced_margin_usd) * 100) as bigint), "
+            "cast(round(sum(margin_after_named_credits_usd) * 100) as bigint), "
+            "cast(round(sum(margin_after_allocated_credits_usd) * 100) as bigint) "
+            "from main_marts.margin_by_vendor"
+        ).fetchone()
+        # Integer comparisons on purpose. The dollar columns are exact now and
+        # these questions are still about whether a figure moved at all, which
+        # is the shape that broke when the column was a float.
+        swing = con.execute(
+            "select vendor_id, period, margin_moved_cents, "
+            "cast(round(margin_after_named_credits_usd * 100) as bigint) "
+            "from main_marts.margin_by_vendor "
+            "order by abs(margin_moved_cents) desc, vendor_id, period limit 1"
+        ).fetchone()
+        moved = con.execute(
+            "select count(*), coalesce(sum(abs(margin_moved_cents)), 0) "
+            "from main_marts.margin_by_vendor where margin_moved_cents <> 0"
+        ).fetchone()
+        # Asks for the floats by name rather than listing the exact types that
+        # are allowed. An allow list would flag a new decimal width as a defect
+        # and the thing being guarded against is a float.
+        types = con.execute(
+            "select column_name, data_type from information_schema.columns "
+            "where table_schema = 'main_marts' "
+            "and (column_name like '%usd' or column_name like '%cents') "
+            "and data_type in ('DOUBLE', 'FLOAT', 'REAL') "
+            "group by 1, 2 order by 1"
+        ).fetchall()
     finally:
         con.close()
 
@@ -177,6 +251,33 @@ def duckdb_shape(db_path: Path) -> dict:
         "as_of_join": {
             "lines_on_a_reassigned_product": reassigned[0],
             "lines_with_no_product_version_in_force": reassigned[1],
+        },
+        "allocation": {
+            "by_scope": {
+                scope: {
+                    "rows": rows,
+                    "credits": credits,
+                    "cents": int(cents),
+                }
+                for scope, rows, credits, cents in scopes
+            },
+            "credits_whose_parts_do_not_sum_to_the_credit": off_by,
+            "margin_cents": {
+                "invoiced": int(stages[0]),
+                "after_named_credits": int(stages[1]),
+                "after_allocated_credits": int(stages[2]),
+            },
+            "vendor_periods_that_moved": moved[0],
+            "absolute_margin_moved_cents": int(moved[1] or 0),
+            "money_columns_that_are_not_exact": [
+                {"column": name, "type": kind} for name, kind in types
+            ],
+            "largest_single_move": {
+                "vendor_id": swing[0],
+                "period": swing[1],
+                "cents": int(swing[2]),
+                "that_rows_named_margin_cents": int(swing[3]),
+            },
         },
     }
 
@@ -248,11 +349,15 @@ def main(argv: list[str] | None = None) -> int:
         print(f"loaded {len(counts)} raw tables, {sum(counts.values())} rows")
 
     built = dbt(["build"], db_path, "duckdb")
-    tail = built.stdout.strip().splitlines()[-1:] or ["no output"]
-    print(f"dbt build --target duckdb exit {built.returncode}: {tail[-1].strip()}")
     if built.returncode != 0:
         sys.stderr.write(built.stdout[-4000:])
         return built.returncode
+    result = build_result(built.stdout)
+    summary = "  ".join(f"{k}={v}" for k, v in sorted(result.items()))
+    print(f"dbt build --target duckdb exit {built.returncode}: {summary}")
+    if result.get("error") or result.get("warn"):
+        sys.stderr.write(built.stdout[-4000:])
+        return 1
 
     # Both parses write the same manifest path, so the duckdb layout has to be
     # read before the bigquery parse runs or it reads back the other target's
@@ -277,6 +382,7 @@ def main(argv: list[str] | None = None) -> int:
             "no credential path to one. See scripts/scan_probe.py"
         ),
     }
+    shape["dbt_build"] = result
     shape["rebuilt_by"] = "python3 scripts/run_transform.py"
     manifest.write(SHAPE_MEASUREMENT, shape)
     print(f"wrote {SHAPE_MEASUREMENT.relative_to(REPO_ROOT)}")

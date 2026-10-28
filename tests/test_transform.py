@@ -332,17 +332,36 @@ def check_the_readme_figures_come_from_the_shape_measurement():
         "unplaceable credits": f"{credits['unplaceable']} credits name a line",
         "credits over their line": f"{credits['exceeding_the_line_they_adjust']} are worth more than the line",
     }
+
+    # The allocation figures, from the same file. These were typed by hand on
+    # the day they were written and one of them was a percentage nobody could
+    # recompute, which is the whole reason this function exists.
+    allocation = shape["allocation"]
+    move = allocation["largest_single_move"]
+    share = abs(move["cents"]) / move["that_rows_named_margin_cents"] * 100
+    expected.update({
+        "vendor periods that moved": (
+            f"{allocation['vendor_periods_that_moved']} of the "
+            f"{rows['main_marts.margin_by_vendor']}"
+        ),
+        "largest single move": f"${money(abs(move['cents']))} off one vendor's",
+        "that move as a share": f"{share:.1f} percent of what that row claimed",
+        "gap between the two totals": (
+            f"${money(allocation['by_scope']['invoice']['cents'])} over the whole"
+        ),
+        "what nobody can place": f"${money(allocation['by_scope']['unallocated']['cents'])}",
+    })
     text = _readme_flat()
     missing = {name: want for name, want in expected.items() if want not in text}
     if missing:
         raise AssertionError(f"the README does not carry these derived figures: {missing}")
 
     # The row table has an address, so it gets compared cell by cell rather than
-    # searched for. Three cells, which is the shape only this table has.
+    # searched for.
     table = dict(
         (name, int(count.replace(",", "")))
         for name, count in re.findall(
-            r"^\| (fct_\w+|margin_by_\w+) \| ([\d,]+) \|$",
+            r"^\| (\w+) \| ([\d,]+) \|$",
             (REPO_ROOT / "README.md").read_text(encoding="utf-8"),
             re.MULTILINE,
         )
@@ -350,16 +369,26 @@ def check_the_readme_figures_come_from_the_shape_measurement():
     if not table:
         raise AssertionError("the README has no model row count table")
     for name, stated in table.items():
-        measured = rows[f"main_marts.{name}"]
-        if stated != measured:
+        key = f"main_marts.{name}"
+        if key not in rows:
+            raise AssertionError(f"the README table names {name}, which the build did not make")
+        if stated != rows[key]:
             raise AssertionError(
-                f"the README says {name} holds {stated} rows and the build made {measured}"
+                f"the README says {name} holds {stated} rows and the build made {rows[key]}"
             )
-    listed = {key.split(".")[-1] for key in rows if key.split(".")[-1] in table}
-    if len(table) != 5:
-        raise AssertionError(f"the table lists {len(table)} tables, expected five")
-    if listed != set(table):
-        raise AssertionError(f"the table names {sorted(table)} and the measurement {sorted(listed)}")
+    # Derived from the measurement rather than counted here. The first version
+    # asserted a literal five and the sixth mart would have been met with a
+    # failing check that named the wrong problem. The scan pair is left out
+    # because it has its own section and its own count.
+    expected = {
+        key.split(".")[-1] for key in rows
+        if not key.split(".")[-1].startswith("scan_")
+        and not key.split(".")[-1].startswith("dim_")
+    }
+    if expected != set(table):
+        raise AssertionError(
+            f"the table names {sorted(table)} and the marts are {sorted(expected)}"
+        )
 
 
 def check_every_finance_query_was_executed_and_both_halves_agree():

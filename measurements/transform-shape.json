@@ -1,4 +1,43 @@
 {
+  "allocation": {
+    "absolute_margin_moved_cents": 49934489,
+    "by_scope": {
+      "direct": {
+        "cents": 1705627407,
+        "credits": 2650,
+        "rows": 2650
+      },
+      "invoice": {
+        "cents": 544899,
+        "credits": 6,
+        "rows": 20
+      },
+      "unallocated": {
+        "cents": 2751856,
+        "credits": 3,
+        "rows": 3
+      },
+      "vendor_quarter": {
+        "cents": 68662106,
+        "credits": 932,
+        "rows": 189899
+      }
+    },
+    "credits_whose_parts_do_not_sum_to_the_credit": 0,
+    "largest_single_move": {
+      "cents": -7370833,
+      "period": "2025-01",
+      "that_rows_named_margin_cents": 26362929,
+      "vendor_id": "V009"
+    },
+    "margin_cents": {
+      "after_allocated_credits": 6301036311,
+      "after_named_credits": 6300491412,
+      "invoiced": 7551710343
+    },
+    "money_columns_that_are_not_exact": [],
+    "vendor_periods_that_moved": 294
+  },
   "as_of_join": {
     "lines_on_a_reassigned_product": 715,
     "lines_with_no_product_version_in_force": 0
@@ -12,6 +51,15 @@
     "later_posting_of_a_duplicated_document": 12,
     "total": 3591,
     "unplaceable": 9
+  },
+  "dbt_build": {
+    "error": 0,
+    "no-op": 0,
+    "pass": 75,
+    "reused": 0,
+    "skip": 0,
+    "total": 75,
+    "warn": 0
   },
   "finance_queries": {
     "scan_margin_lines_clustered": {
@@ -63,13 +111,15 @@
   },
   "nodes": {
     "analyses": 3,
-    "data_tests": 51,
-    "models": 15,
+    "data_tests": 58,
+    "models": 17,
     "sources": 7
   },
   "rebuilt_by": "python3 scripts/run_transform.py",
   "rows": {
+    "main_marts.credit_rollup_by_line": 20446,
     "main_marts.dim_product_version": 124,
+    "main_marts.fct_credit_allocation": 192572,
     "main_marts.fct_credit_memo": 3591,
     "main_marts.fct_invoice_line_margin": 20446,
     "main_marts.margin_by_partner": 978,
