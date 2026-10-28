@@ -1,0 +1,105 @@
+{
+  "calendar_lag_days": {
+    "max": 7,
+    "p50": 0,
+    "p95": 4
+  },
+  "corpus": {
+    "censored_credits": 209,
+    "injected": {
+      "achieved": {
+        "cents_scaled_amount": 6,
+        "duplicate_credit": 12,
+        "missing_partner": 31,
+        "orphan_credit": 9,
+        "overapplied_credit": 14,
+        "reassigned_product_line": 4
+      },
+      "requested": {
+        "cents_scaled_amount": 6,
+        "duplicate_credit": 12,
+        "missing_partner": 31,
+        "orphan_credit": 9,
+        "overapplied_credit": 14,
+        "reassigned_product_line": 4
+      }
+    },
+    "rows": {
+      "credit_memos.csv": 3591,
+      "invoice_lines.csv": 20446,
+      "invoices.csv": 6912,
+      "partners.csv": 40,
+      "plans.csv": 40,
+      "products.csv": 124,
+      "vendors.csv": 14
+    },
+    "seed": 20260428,
+    "window": {
+      "end": "2026-06-30",
+      "start": "2024-07-01"
+    }
+  },
+  "credits": 3588,
+  "credits_held_past_a_weekend": 308,
+  "credits_with_no_matching_invoice": 3,
+  "observable_lag_days": {
+    "max": 164,
+    "p50": 18,
+    "p90": 88,
+    "p95": 105,
+    "p99": 126
+  },
+  "raise_lag_days": {
+    "p50": 17,
+    "p95": 103
+  },
+  "rebuilt_by": "python3 scripts/build_corpus.py",
+  "window": {
+    "avoidable_wait_credit_days": 190413,
+    "coverage_at_the_pooled_window": {
+      "price_protection": {
+        "coverage_pct": 100.0,
+        "credits": 1441,
+        "inside_window": 1441
+      },
+      "return_credit": {
+        "coverage_pct": 99.84,
+        "credits": 1213,
+        "inside_window": 1211
+      },
+      "volume_rebate": {
+        "coverage_pct": 82.23,
+        "credits": 934,
+        "inside_window": 768
+      }
+    },
+    "coverage_if_the_shortest_window_were_applied_to_all": {
+      "price_protection": {
+        "coverage_pct": 96.18,
+        "credits": 1441,
+        "inside_window": 1386
+      },
+      "return_credit": {
+        "coverage_pct": 46.41,
+        "credits": 1213,
+        "inside_window": 563
+      },
+      "volume_rebate": {
+        "coverage_pct": 1.61,
+        "credits": 934,
+        "inside_window": 15
+      }
+    },
+    "coverage_target_pct": 95.0,
+    "keyed_window_days": {
+      "price_protection": 20,
+      "return_credit": 49,
+      "volume_rebate": 124
+    },
+    "pooled_window_days": 105,
+    "shortest_keyed_window_days": 20,
+    "types_under_covered_by_the_pooled_window": [
+      "volume_rebate"
+    ]
+  }
+}
