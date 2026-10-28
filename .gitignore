@@ -1,0 +1,8 @@
+# Anchored with a leading slash. A bare `data/` matches at every depth, so an
+# ignore written for the corpus directory would also swallow a fixture directory
+# of the same name further down the tree.
+/data/
+
+__pycache__/
+*.pyc
+.venv/

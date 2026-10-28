@@ -1,0 +1,5 @@
+[project]
+name = "gross-margin-bigquery"
+version = "0.0.1"
+description = "Gross margin by vendor, partner and product line with late credits accounted for"
+requires-python = ">=3.10"
