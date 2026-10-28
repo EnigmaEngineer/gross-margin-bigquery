@@ -6,3 +6,19 @@
 __pycache__/
 *.pyc
 .venv/
+
+# The DuckDB build is a local artifact. It is rebuilt from the corpus in one
+# command and it is tens of megabytes.
+/build/
+
+# dbt writes its manifest, its compiled sql and its logs under the project. The
+# compiled sql is derived from the models and the manifest records the machine
+# that parsed it.
+transform/target/
+transform/dbt_packages/
+transform/logs/
+
+# dbt drops an anonymous machine id beside the profile on first run. It is per
+# machine, so committing it both publishes an identifier and makes every other
+# machine show a diff it did not make.
+transform/profiles/.user.yml
