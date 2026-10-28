@@ -32,11 +32,38 @@ models:
       - name: amount_usd
         tests: [not_null]
 
+  - name: fct_credit_allocation
+    description: >
+      Allocation grain. One row per credit per line it spreads over, in whole
+      cents that sum back to the credit. allocation_scope says how far the credit
+      could be placed, from the line it names down to nothing at all.
+    columns:
+      - name: credit_id
+        tests: [not_null]
+      - name: allocated_cents
+        tests: [not_null]
+      - name: allocation_scope
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['direct', 'vendor_quarter', 'invoice', 'unallocated']
+
+  - name: credit_rollup_by_line
+    description: >
+      The single rollup of credits to line grain, carrying the named total and
+      the allocated total side by side. The margin marts read this and never the
+      credit facts.
+    columns:
+      - name: line_id
+        tests: [unique, not_null]
+
   - name: margin_by_vendor
     columns:
       - name: vendor_id
         tests: [not_null]
       - name: invoiced_margin_usd
+        tests: [not_null]
+      - name: margin_after_allocated_credits_usd
         tests: [not_null]
 
   - name: margin_by_partner
