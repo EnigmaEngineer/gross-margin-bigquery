@@ -1,0 +1,11 @@
+# Provider binaries and the lock naming their hashes per platform. The lock is
+# normally committed. It is not here because nothing has been applied, so pinning
+# hashes resolved on one throwaway container would claim a reproducibility this
+# directory does not have. It gets committed on the first run that produces a plan.
+.terraform/
+.terraform.lock.hcl
+
+# State, and the variable file holding the project id. Neither belongs here.
+*.tfstate
+*.tfstate.*
+*.tfvars
