@@ -1,0 +1,32 @@
+name: gross_margin
+version: "0.0.1"
+config-version: 2
+
+profile: gross_margin
+
+model-paths: ["models"]
+macro-paths: ["macros"]
+analysis-paths: ["analyses"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+# The raw layer is loaded outside dbt. scripts/load_duckdb.py reads the generated
+# csv files into the raw schema for the duckdb target, and on BigQuery the same
+# tables arrive from the landing bucket. Sources point at `raw` either way so the
+# model code does not know which loader ran.
+vars:
+  raw_schema: raw
+
+models:
+  gross_margin:
+    staging:
+      +materialized: view
+      +schema: staging
+    marts:
+      +materialized: table
+      +schema: marts
+    scan:
+      # The scan pair exists to be queried, not to be read. Both halves hold the
+      # same rows so that the only difference a query sees is the physical layout.
+      +materialized: table
+      +schema: marts

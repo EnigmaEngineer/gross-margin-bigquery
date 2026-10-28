@@ -1,0 +1,97 @@
+version: 2
+
+models:
+  - name: stg_vendors
+    description: >
+      The three program names come from REBATE_PROGRAMS in gross_margin/generate.py
+      rather than from reading the top of the csv file, which is how the first
+      version of this test missed one of them.
+    columns:
+      - name: vendor_id
+        tests: [unique, not_null]
+      - name: rebate_program
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["quarterly-volume", "annual-volume", "none"]
+
+  - name: stg_partners
+    columns:
+      - name: partner_id
+        tests: [unique, not_null]
+      - name: region
+        tests: [not_null]
+
+  - name: stg_plans
+    columns:
+      - name: partner_id
+        tests: [unique, not_null]
+      - name: plan_code
+        tests: [not_null]
+
+  - name: stg_products
+    description: >
+      Not unique on product_id. A product can be moved to another product line
+      partway through the window and both rows are correct, so the key here is
+      the product and the date together. That pair is asserted by
+      tests/one_row_per_product_version.sql rather than by a column test.
+    columns:
+      - name: product_id
+        tests: [not_null]
+      - name: effective_from
+        tests: [not_null]
+      - name: vendor_id
+        tests:
+          - relationships:
+              arguments:
+                to: ref('stg_vendors')
+                field: vendor_id
+
+  - name: stg_invoices
+    columns:
+      - name: invoice_id
+        tests: [unique, not_null]
+      - name: invoice_date
+        tests: [not_null]
+      - name: period
+        tests: [not_null]
+      - name: partner_id
+        description: >
+          Nullable. An invoice with no partner on it is the gap between billing
+          and the CRM, and it is kept rather than dropped.
+
+  - name: stg_invoice_lines
+    columns:
+      - name: line_id
+        tests: [unique, not_null]
+      - name: invoice_id
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_invoices')
+                field: invoice_id
+      - name: extended_revenue_usd
+        tests: [not_null]
+      - name: extended_cost_usd
+        tests: [not_null]
+
+  - name: stg_credit_memos
+    description: >
+      One row per credit id. vendor_doc_no is deliberately not unique, because a
+      vendor document posted twice is two rows of real money.
+    columns:
+      - name: credit_id
+        tests: [unique, not_null]
+      - name: credit_type
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["price_protection", "return_credit", "volume_rebate"]
+      - name: applies_to
+        tests:
+          - accepted_values:
+              arguments:
+                values: ["cost", "revenue"]
+      - name: posted_date
+        tests: [not_null]

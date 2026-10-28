@@ -1,0 +1,28 @@
+# Two targets against one set of models. `duckdb` is what runs on a laptop and in
+# the check suite. `bigquery` is what the project is for.
+#
+# Nothing here holds a credential. The BigQuery target reads a project and a
+# dataset out of the environment and has no default for either, so a run with no
+# environment fails by name rather than pointing at somebody's project. The
+# identifiers it wants are the three that carry no default in
+# infra/variables.tf, and infra/README.md says what creating the trust involves.
+gross_margin:
+  target: duckdb
+  outputs:
+    duckdb:
+      type: duckdb
+      path: "{{ env_var('GMB_DUCKDB_PATH', 'build/gross_margin.duckdb') }}"
+      schema: main
+      threads: 4
+
+    bigquery:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('GMB_GCP_PROJECT') }}"
+      dataset: "{{ env_var('GMB_BQ_DATASET') }}"
+      location: "{{ env_var('GMB_BQ_LOCATION', 'US') }}"
+      threads: 4
+      priority: interactive
+      # A dry run is how bytes scanned gets measured, and it needs a real project
+      # to answer. Until the trust exists there is no number here.
+      maximum_bytes_billed: 100000000000
