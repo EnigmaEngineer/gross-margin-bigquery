@@ -44,6 +44,13 @@ select
     credits.vendor_doc_no_posted_twice,
     credits.is_later_posting_of_the_same_doc,
     credits.line_id,
+    -- Two invoice references and they are not the same question. quoted_invoice_id
+    -- is what the vendor wrote on the credit. invoice_id is the one reached
+    -- through a line this system holds, so it is null exactly when the line is
+    -- unknown. Six of the nine credits quoting a line we do not have still quote
+    -- an invoice we do, and dropping the vendor's own reference threw away the
+    -- only route left to place them.
+    credits.invoice_id as quoted_invoice_id,
     margin_lines.invoice_id,
     margin_lines.invoice_period,
     margin_lines.invoice_date,
