@@ -1,0 +1,67 @@
+version: 2
+
+models:
+  - name: dim_product_version
+    description: >
+      One row per product version, closed with the start of the next version and
+      left open on the current one.
+    columns:
+      - name: product_id
+        tests: [not_null]
+      - name: product_line
+        tests: [not_null]
+
+  - name: fct_invoice_line_margin
+    description: >
+      Line grain at the margin the invoice claims. No credit is applied here.
+    columns:
+      - name: line_id
+        tests: [unique, not_null]
+      - name: invoiced_margin_usd
+        tests: [not_null]
+      - name: invoice_date
+        tests: [not_null]
+
+  - name: fct_credit_memo
+    description: >
+      Credit grain, resolved to the line it quotes where that line exists.
+      is_placeable is false for a credit naming a line this system does not hold.
+    columns:
+      - name: credit_id
+        tests: [unique, not_null]
+      - name: amount_usd
+        tests: [not_null]
+
+  - name: margin_by_vendor
+    columns:
+      - name: vendor_id
+        tests: [not_null]
+      - name: invoiced_margin_usd
+        tests: [not_null]
+
+  - name: margin_by_partner
+    columns:
+      - name: period
+        tests: [not_null]
+
+  - name: margin_by_product_line
+    columns:
+      - name: product_line
+        tests: [not_null]
+      - name: period
+        tests: [not_null]
+
+  - name: scan_margin_lines_unclustered
+    description: >
+      The control half of the layout pair. No partitioning and no clustering.
+    columns:
+      - name: line_id
+        tests: [unique, not_null]
+
+  - name: scan_margin_lines_clustered
+    description: >
+      The treatment half. Monthly partitions on invoice_date and clustering on
+      vendor_id then partner_id then product_line, on BigQuery only.
+    columns:
+      - name: line_id
+        tests: [unique, not_null]
