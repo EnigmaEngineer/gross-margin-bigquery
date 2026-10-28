@@ -1,4 +1,14 @@
-# Nothing. The generator, the measurement and the suite are standard library only,
-# which is why the floor in pyproject.toml is a version rather than a wheel
-# availability question. Dependencies arrive with the transformation layer, and a
-# name goes in this file on the day something imports it.
+# The transformation layer arrives with dbt and nothing else does. The generator,
+# the lag measurement and the check suite are still standard library only, so a
+# clone that never builds the models needs none of this.
+#
+# Every pin here was checked against the 3.10 floor in pyproject.toml with
+#   pip download --no-deps --only-binary :all: --python-version 3.10 <pin>
+# before it was written down. duckdb is the reason that check is not optional.
+# The version the sandbox installs by default is 2.0.0, which publishes no wheel
+# for 3.10 at all, so pinning what happened to be there would have retired the
+# declared floor and nothing in the repo would have failed.
+dbt-core==1.12.6
+dbt-duckdb==1.11.1
+dbt-bigquery==1.12.1
+duckdb==1.5.6

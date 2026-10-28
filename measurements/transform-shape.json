@@ -1,0 +1,86 @@
+{
+  "as_of_join": {
+    "lines_on_a_reassigned_product": 715,
+    "lines_with_no_product_version_in_force": 0
+  },
+  "bytes_scanned": {
+    "measured": false,
+    "why": "a dry run needs a billing enabled project and this repository has no credential path to one. See scripts/scan_probe.py"
+  },
+  "credits": {
+    "exceeding_the_line_they_adjust": 20,
+    "later_posting_of_a_duplicated_document": 12,
+    "total": 3591,
+    "unplaceable": 9
+  },
+  "finance_queries": {
+    "scan_margin_lines_clustered": {
+      "finance_q1_vendor_quarter": 3,
+      "finance_q2_partner_period": 41,
+      "finance_q3_margin_trend": 144
+    },
+    "scan_margin_lines_unclustered": {
+      "finance_q1_vendor_quarter": 3,
+      "finance_q2_partner_period": 41,
+      "finance_q3_margin_trend": 144
+    }
+  },
+  "layout_resolved_by_target": {
+    "bigquery": {
+      "scan_margin_lines_clustered": {
+        "cluster_by": [
+          "vendor_id",
+          "partner_id",
+          "product_line"
+        ],
+        "partition_by": {
+          "data_type": "date",
+          "field": "invoice_date",
+          "granularity": "month"
+        }
+      },
+      "scan_margin_lines_unclustered": {
+        "cluster_by": null,
+        "partition_by": null
+      }
+    },
+    "duckdb": {
+      "scan_margin_lines_clustered": {
+        "cluster_by": null,
+        "partition_by": null
+      },
+      "scan_margin_lines_unclustered": {
+        "cluster_by": null,
+        "partition_by": null
+      }
+    }
+  },
+  "margin": {
+    "by_partner_cents": 7551710343,
+    "by_product_line_cents": 7551710343,
+    "by_vendor_cents": 7551710343,
+    "line_grain_cents": 7551710343
+  },
+  "nodes": {
+    "analyses": 3,
+    "data_tests": 51,
+    "models": 15,
+    "sources": 7
+  },
+  "rebuilt_by": "python3 scripts/run_transform.py",
+  "rows": {
+    "main_marts.dim_product_version": 124,
+    "main_marts.fct_credit_memo": 3591,
+    "main_marts.fct_invoice_line_margin": 20446,
+    "main_marts.margin_by_partner": 978,
+    "main_marts.margin_by_product_line": 144,
+    "main_marts.margin_by_vendor": 336,
+    "main_marts.scan_margin_lines_clustered": 20446,
+    "main_marts.scan_margin_lines_unclustered": 20446
+  },
+  "rows_an_inner_join_would_drop": {
+    "lines_with_no_partner": 93,
+    "their_margin_cents": 33013319,
+    "their_revenue_cents": 202481682
+  }
+}

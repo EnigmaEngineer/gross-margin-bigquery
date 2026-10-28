@@ -7,10 +7,13 @@ they land, and this repo is about knowing by how long and by how much.
 
 ```
 python3 scripts/build_corpus.py
+python3 scripts/run_transform.py
 ```
 
-That generates the corpus, measures the credit lag and writes
-`measurements/credit-lag.json`. The suite needs no arguments and no data on disk.
+The first generates the corpus, measures the credit lag and writes
+`measurements/credit-lag.json`. The second loads that corpus into DuckDB, builds
+the dbt models over it and writes `measurements/transform-shape.json`. The check
+suite needs no arguments and no data on disk.
 
 ```
 python3 tests/run_all.py
@@ -114,6 +117,96 @@ The last one is the only entry here that is not a bad row. Both product rows are
 correct and the dimension is now effective dated, so margin by product line depends
 on which row you join to and nothing in the data says that choice was made.
 
+## The transformation layer
+
+The models are written for BigQuery and verified against DuckDB on every run.
+Nobody here holds a BigQuery project, so a layer that could only be exercised
+against one would ship untested.
+
+15 models and 51 data tests, all passing on
+DuckDB. Seven staging views cast the landing text into exact decimals, and three
+facts and three marts sit above them. The last pair exists to be queried rather
+than read.
+
+Two macros carry everything adapter specific. `money.sql` holds one money cast
+and one date cast, because `numeric` is a BigQuery type name with no DuckDB alias
+and `date_diff` takes its arguments in a different order on each engine.
+`scan_layout.sql` returns a BigQuery partition and clustering spec or nothing,
+chosen by adapter. A check refuses either spelling written into a model.
+
+| table | rows |
+|---|---|
+| fct_invoice_line_margin | 20,446 |
+| fct_credit_memo | 3,591 |
+| margin_by_vendor | 336 |
+| margin_by_partner | 978 |
+| margin_by_product_line | 144 |
+
+Invoiced margin over the window is $75,517,103.43 and all
+three marts agree with the line grain to the cent. That identity is a test rather
+than a note, because three aggregations of one table are three chances to lose a
+row.
+
+Three results from building it, and the first is the one worth keeping.
+
+93 invoice lines carry no partner at all, which is
+the real gap between a billing system and a CRM. An inner join to the partner
+dimension drops every one of them and takes $330,133.19
+of margin out of the totals with nothing reporting a loss. They are kept with a
+null key and a `has_partner` flag, and the partner mart gives them their own row.
+
+A product can be moved to another product line partway through the window and
+both rows are correct, so margin by product line depends on which version you
+join to. `dim_product_version` closes each version with the start of the next and
+the fact table resolves the one in force on the invoice date.
+715 lines sit on a reassigned product.
+
+9 credits name a line this system does not hold and
+20 are worth more than the line they
+adjust. Both keep their rows and get a flag. The marts publish the margin the
+invoice claims beside the margin after the credits that name a line, and neither
+is the true margin, because a credit naming no line is in neither. Closing that
+gap is the reconciliation work and not this layer's.
+
+## Bytes scanned, and why there is no number here
+
+The plan for this layer asked for bytes scanned on three finance queries, with
+the clustered table against the unclustered one. **That measurement does not
+exist and nothing in this file estimates it.**
+
+BigQuery reports the bytes a query would scan through a dry run, which costs
+nothing and needs a billing enabled project. This repository has no credential
+path to one. `scripts/scan_probe.py` is the measurement, it names every blocker
+and it exits 2 rather than printing anything.
+
+A DuckDB row count is not a substitute. Neither is a file size. They are
+different quantities on a different engine and publishing one under the name of
+the other is the only way this repository could lie.
+
+What is measurable today is narrower and it is real. `dbt parse` never
+opens a connection, so the BigQuery branch of the layout macro resolves with no
+credentials. Parsed against the bigquery target, the clustered half comes back
+with monthly partitions on `invoice_date` and clustering on `vendor_id` then
+`partner_id` then `product_line`. Parsed against duckdb, both halves come back
+with neither. The adapter dispatch works. What the layout costs is unknown, and
+`dbt compile --target bigquery` cannot help because it opens a connection and
+fails to authenticate, with and without `--no-introspect`.
+
+The three queries are executed against DuckDB on every build, once per half of
+the pair. They return 3 and
+41 and 144 rows and the
+two halves agree on all three. That proves the SQL parses and returns something,
+which is not the same as measuring it, and the first version of query one failed
+exactly there. A macro call inside a line comment renders like any other, the
+relation it produced ran to three lines, and two of them escaped the comment.
+Compile exited zero on it.
+
+The key order is an argument rather than a result. Clustering prunes on a prefix,
+and the first query restricts to one vendor while the second groups by partner
+across a month, so vendor first should help query one most and query two least.
+Query three reads the whole history and may gain nothing. The probe is what would
+settle those three predictions.
+
 ## Infrastructure, written and not applied
 
 `infra/` holds a landing bucket, three BigQuery datasets, a build identity and a
@@ -131,8 +224,17 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
 
 ## Known limitations
 
-- No BigQuery statement here has run. The SQL arrives with the transformation
-  layer and until then the dataset layout is an argument rather than a result.
+- No BigQuery statement here has run. The models compile for it and are
+  verified against DuckDB, so the layer is exercised and the warehouse is not.
+- There is no bytes scanned figure, so the clustered and unclustered pair is a
+  design with a test harness behind it and no result. `scripts/scan_probe.py`
+  names what it waits on.
+- DuckDB has neither partitioning nor clustering, so the two halves of the scan
+  pair are identical tables there. The check that they hold the same rows is
+  real. The layout difference is not, anywhere this has run.
+- The analyses are compiled and never executed on BigQuery, so their SQL is
+  graded by a parse and by the DuckDB build rather than by the engine the
+  partition syntax is for.
 - The tail of the lag distribution is a lower bound. 209 credits were scheduled to
   post after the window closes and were not written, so the corpus is right
   censored and the largest lag seen is the largest the window could hold.

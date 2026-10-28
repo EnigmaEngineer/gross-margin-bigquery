@@ -36,6 +36,7 @@ MODULES = [
     "tests.test_lag",
     "tests.test_manifest",
     "tests.test_infra",
+    "tests.test_transform",
     "tests.test_readme",
     # Last on purpose. It checks that nothing above it edited the shared corpus.
     "tests.test_fixture_integrity",

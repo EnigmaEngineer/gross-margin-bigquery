@@ -1,0 +1,297 @@
+"""Builds the transformation layer on DuckDB and records what it produced.
+
+Three steps and the third is the one worth explaining.
+
+    python3 scripts/run_transform.py
+
+It loads the generated corpus into DuckDB, runs `dbt build` against the duckdb
+target, then parses the project a second time against the bigquery target and
+records the physical layout each target resolved.
+
+That second parse is the only BigQuery grading available without credentials.
+`dbt compile --target bigquery` opens a connection and fails, with and without
+`--no-introspect`. `dbt parse` does not connect, so the manifest it writes still
+carries the layout the bigquery branch of macros/scan_layout.sql produced. That
+answers whether the adapter dispatch works. It does not answer what BigQuery
+would charge for a query, and nothing in this repository can answer that yet.
+
+The parse against bigquery needs a project name to render the profile. It is
+given a string that is not a project, because a parse never contacts the API. A
+real run supplies the real identifiers through the environment and the profile
+has no default for either, so a misconfigured run fails by name.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from gross_margin import manifest
+from scripts.load_duckdb import load
+
+TRANSFORM = REPO_ROOT / "transform"
+SHAPE_MEASUREMENT = REPO_ROOT / "measurements" / "transform-shape.json"
+
+# A parse renders the profile and never opens a connection, so this string is
+# never sent anywhere. It is spelled to be obvious in a log.
+PARSE_ONLY_PROJECT = "parse-only-no-such-project"
+
+QUERIES = (
+    "finance_q1_vendor_quarter",
+    "finance_q2_partner_period",
+    "finance_q3_margin_trend",
+)
+
+PAIR = ("scan_margin_lines_unclustered", "scan_margin_lines_clustered")
+
+MART_TABLES = (
+    "main_marts.dim_product_version",
+    "main_marts.fct_invoice_line_margin",
+    "main_marts.fct_credit_memo",
+    "main_marts.margin_by_vendor",
+    "main_marts.margin_by_partner",
+    "main_marts.margin_by_product_line",
+    "main_marts.scan_margin_lines_unclustered",
+    "main_marts.scan_margin_lines_clustered",
+)
+
+
+def dbt(args: list[str], db_path: Path, target: str) -> subprocess.CompletedProcess:
+    env = dict(os.environ)
+    env["DBT_PROFILES_DIR"] = str(TRANSFORM / "profiles")
+    env["GMB_DUCKDB_PATH"] = str(db_path)
+    env.setdefault("GMB_GCP_PROJECT", PARSE_ONLY_PROJECT)
+    env.setdefault("GMB_BQ_DATASET", "gross_margin")
+    return subprocess.run(
+        ["dbt", *args, "--target", target, "--no-partial-parse"],
+        cwd=TRANSFORM,
+        env=env,
+        capture_output=True,
+        text=True,
+    )
+
+
+def node_counts(manifest_path: Path) -> dict:
+    doc = json.loads(manifest_path.read_text(encoding="utf-8"))
+    models = [k for k in doc["nodes"] if doc["nodes"][k]["resource_type"] == "model"]
+    tests = [k for k in doc["nodes"] if doc["nodes"][k]["resource_type"] == "test"]
+    return {
+        "models": len(models),
+        "data_tests": len(tests),
+        "sources": len(doc.get("sources", {})),
+        "analyses": len([k for k in doc.get("nodes", {})
+                         if doc["nodes"][k]["resource_type"] == "analysis"]),
+    }
+
+
+def scan_layout_from(manifest_path: Path) -> dict:
+    """What each target resolved for the two halves of the scan pair."""
+    doc = json.loads(manifest_path.read_text(encoding="utf-8"))
+    out = {}
+    for key, node in doc["nodes"].items():
+        name = node.get("name", "")
+        if not name.startswith("scan_margin_lines"):
+            continue
+        if node["resource_type"] != "model":
+            continue
+        config = node["config"]
+        out[name] = {
+            "partition_by": config.get("partition_by"),
+            "cluster_by": config.get("cluster_by"),
+        }
+    return out
+
+
+def duckdb_shape(db_path: Path) -> dict:
+    import duckdb
+
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        rows = {
+            table: con.execute(f"select count(*) from {table}").fetchone()[0]
+            for table in MART_TABLES
+        }
+        # The identity the marts have to satisfy. Whole cents, because a
+        # difference below one would be an artefact of the group by order.
+        margin = {
+            "line_grain_cents": int(round(
+                con.execute(
+                    "select sum(invoiced_margin_usd) * 100 "
+                    "from main_marts.fct_invoice_line_margin"
+                ).fetchone()[0]
+            )),
+        }
+        for grain, table in (
+            ("by_vendor", "main_marts.margin_by_vendor"),
+            ("by_partner", "main_marts.margin_by_partner"),
+            ("by_product_line", "main_marts.margin_by_product_line"),
+        ):
+            margin[f"{grain}_cents"] = int(round(
+                con.execute(
+                    f"select sum(invoiced_margin_usd) * 100 from {table}"
+                ).fetchone()[0]
+            ))
+        kept = con.execute(
+            "select count(*), sum(extended_revenue_usd) * 100, "
+            "sum(invoiced_margin_usd) * 100 "
+            "from main_marts.fct_invoice_line_margin where not has_partner"
+        ).fetchone()
+        credits = con.execute(
+            "select count(*), "
+            "sum(case when not is_placeable then 1 else 0 end), "
+            "sum(case when is_later_posting_of_the_same_doc then 1 else 0 end), "
+            "sum(case when exceeds_the_line_it_adjusts then 1 else 0 end) "
+            "from main_marts.fct_credit_memo"
+        ).fetchone()
+        reassigned = con.execute(
+            "select "
+            "sum(case when product_was_reassigned then 1 else 0 end), "
+            "sum(case when product_version_unresolved then 1 else 0 end) "
+            "from main_marts.fct_invoice_line_margin"
+        ).fetchone()
+    finally:
+        con.close()
+
+    return {
+        "rows": rows,
+        "margin": margin,
+        "rows_an_inner_join_would_drop": {
+            "lines_with_no_partner": kept[0],
+            "their_revenue_cents": int(round(kept[1])),
+            "their_margin_cents": int(round(kept[2])),
+        },
+        "credits": {
+            "total": credits[0],
+            "unplaceable": credits[1],
+            "later_posting_of_a_duplicated_document": credits[2],
+            "exceeding_the_line_they_adjust": credits[3],
+        },
+        "as_of_join": {
+            "lines_on_a_reassigned_product": reassigned[0],
+            "lines_with_no_product_version_in_force": reassigned[1],
+        },
+    }
+
+
+def run_the_finance_queries(db_path: Path) -> dict:
+    """Compile each finance query for both halves of the pair and execute it.
+
+    This exists because of a defect it caught on the day it was written. A jinja
+    call sitting inside a SQL line comment renders like any other, and the
+    relation it produced spanned three lines, so two of them escaped the comment
+    and the query no longer parsed. `dbt compile` exited zero on it and so did
+    `dbt parse`, because an analysis is rendered and never run.
+
+    So the queries get executed against DuckDB on every build. That does not make
+    them BigQuery queries and it does not measure anything about layout. It
+    proves they parse and return rows, which is the part that was silently
+    untrue.
+
+    Every compile happens before the connection opens. DuckDB allows one writer,
+    and dbt opens the database read write even to compile, so a read only handle
+    held across a compile blocks it with a lock error.
+    """
+    import duckdb
+
+    rendered: dict[str, dict[str, str]] = {}
+    for half in PAIR:
+        compiled = dbt(
+            ["compile", "--vars", json.dumps({"scan_model": half})], db_path, "duckdb"
+        )
+        if compiled.returncode != 0:
+            raise SystemExit(f"dbt compile failed for {half}:\n{compiled.stdout[-2000:]}")
+        rendered[half] = {}
+        for query in QUERIES:
+            path = (TRANSFORM / "target" / "compiled" / "gross_margin"
+                    / "analyses" / f"{query}.sql")
+            sql = path.read_text(encoding="utf-8")
+            if half not in sql:
+                raise SystemExit(
+                    f"{query} compiled without naming {half}, so the var did not "
+                    "reach it and both halves would be measured on one table"
+                )
+            rendered[half][query] = sql
+
+    con = duckdb.connect(str(db_path), read_only=True)
+    try:
+        return {
+            half: {query: len(con.execute(sql).fetchall())
+                   for query, sql in queries.items()}
+            for half, queries in rendered.items()
+        }
+    finally:
+        con.close()
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--corpus", default=str(REPO_ROOT / "data"))
+    parser.add_argument("--db", default=str(REPO_ROOT / "build" / "gross_margin.duckdb"))
+    parser.add_argument(
+        "--skip-load",
+        action="store_true",
+        help="use the database as it is, for a rebuild of the models alone",
+    )
+    args = parser.parse_args(argv)
+    db_path = Path(args.db)
+
+    if not args.skip_load:
+        counts = load(Path(args.corpus), db_path)
+        print(f"loaded {len(counts)} raw tables, {sum(counts.values())} rows")
+
+    built = dbt(["build"], db_path, "duckdb")
+    tail = built.stdout.strip().splitlines()[-1:] or ["no output"]
+    print(f"dbt build --target duckdb exit {built.returncode}: {tail[-1].strip()}")
+    if built.returncode != 0:
+        sys.stderr.write(built.stdout[-4000:])
+        return built.returncode
+
+    # Both parses write the same manifest path, so the duckdb layout has to be
+    # read before the bigquery parse runs or it reads back the other target's
+    # answer and the comparison says the two agree.
+    manifest_path = TRANSFORM / "target" / "manifest.json"
+    shape = duckdb_shape(db_path)
+    shape["nodes"] = node_counts(manifest_path)
+    shape["layout_resolved_by_target"] = {"duckdb": scan_layout_from(manifest_path)}
+
+    parsed = dbt(["parse"], db_path, "bigquery")
+    print(f"dbt parse --target bigquery exit {parsed.returncode}")
+    if parsed.returncode != 0:
+        sys.stderr.write(parsed.stdout[-4000:])
+        return parsed.returncode
+    shape["layout_resolved_by_target"]["bigquery"] = scan_layout_from(manifest_path)
+
+    shape["finance_queries"] = run_the_finance_queries(db_path)
+    shape["bytes_scanned"] = {
+        "measured": False,
+        "why": (
+            "a dry run needs a billing enabled project and this repository has "
+            "no credential path to one. See scripts/scan_probe.py"
+        ),
+    }
+    shape["rebuilt_by"] = "python3 scripts/run_transform.py"
+    manifest.write(SHAPE_MEASUREMENT, shape)
+    print(f"wrote {SHAPE_MEASUREMENT.relative_to(REPO_ROOT)}")
+
+    nodes = shape["nodes"]
+    print(f"{nodes['models']} models and {nodes['data_tests']} data tests")
+    margin = shape["margin"]
+    agree = len({v for k, v in margin.items() if k.endswith("_cents")}) == 1
+    print(f"margin agrees across all four grains: {agree}")
+    queries = shape["finance_queries"]
+    for half, results in queries.items():
+        print(f"{half:32s} " + "  ".join(f"{q.split('_')[1]}={n}" for q, n in results.items()))
+    print("bytes scanned: not measured, see the README limitations")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
