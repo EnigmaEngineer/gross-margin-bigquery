@@ -17,6 +17,12 @@ clean-targets: ["target", "dbt_packages"]
 vars:
   raw_schema: raw
 
+  # How far back the allocation incremental reprocesses, in days of posted_date.
+  # Deliberately generous. scripts/lookback_probe.py measures what each candidate
+  # window would miss and the reconciliation work is where a number gets chosen,
+  # so nothing here should be read as a tuned value.
+  allocation_lookback_days: 180
+
 models:
   gross_margin:
     staging:
