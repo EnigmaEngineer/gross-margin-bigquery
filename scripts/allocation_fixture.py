@@ -39,12 +39,13 @@ import subprocess
 import sys
 import tempfile
 from pathlib import Path
+from types import SimpleNamespace
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from gross_margin import manifest
+from gross_margin import ledger, manifest
 from gross_margin.registry import ARTIFACTS
 from scripts.load_duckdb import load
 
@@ -195,10 +196,36 @@ class FixtureFailure(RuntimeError):
     pass
 
 
+def as_dicts(name: str, rows: list[list[str]]) -> list[dict]:
+    """The fixture holds rows as lists and gross_margin.ledger wants dicts."""
+    header = ARTIFACTS[name]
+    return [dict(zip(header, row)) for row in rows]
+
+
+def ledger_for(credits: list[list[str]]) -> list[list[str]]:
+    """A ledger posted exactly from these billing rows, with nothing broken.
+
+    This fixture is about the allocation and not about the reconciliation, so the
+    ledger it writes agrees with billing everywhere. scripts/recon_fixture.py is
+    the one that breaks it on purpose. It exists at all because load_duckdb reads
+    the artifact registry and would refuse a corpus missing a registered file.
+    """
+    shim = SimpleNamespace(
+        seed=0,
+        invoices=as_dicts("invoices.csv", ROWS["invoices.csv"]),
+        lines=as_dicts("invoice_lines.csv", ROWS["invoice_lines.csv"]),
+        credits=as_dicts("credit_memos.csv", credits),
+        gl_entries=[],
+    )
+    header = ARTIFACTS["gl_entries.csv"]
+    return [[entry[column] for column in header] for entry in ledger.post(shim)]
+
+
 def write_corpus(directory: Path, credits: list[list[str]]) -> None:
     directory.mkdir(parents=True, exist_ok=True)
     payload = dict(ROWS)
     payload["credit_memos.csv"] = credits
+    payload["gl_entries.csv"] = ledger_for(credits)
     for name, header in ARTIFACTS.items():
         with (directory / name).open("w", newline="", encoding="utf-8") as handle:
             writer = csv.writer(handle)

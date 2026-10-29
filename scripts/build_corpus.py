@@ -22,7 +22,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from gross_margin import discrepancies, lag, manifest
+from gross_margin import discrepancies, ledger, lag, manifest
 from gross_margin.generate import build, write
 from gross_margin.registry import ARTIFACTS, MANIFEST
 
@@ -84,8 +84,14 @@ def main(argv: list[str] | None = None) -> int:
         corpus = build(seed=args.seed)
         if args.no_defects:
             corpus.defects = {"requested": {}, "achieved": {}}
+            ledger.post(corpus)
+            corpus.gl_defects = {"requested": {}, "achieved": {}}
         else:
             discrepancies.apply(corpus)
+            # Posted from billing as it now stands, then broken. Order matters
+            # both ways round and the reasons are in gross_margin/ledger.py.
+            ledger.post(corpus)
+            ledger.inject(corpus)
         digests = write(corpus, out_dir)
         corpus_manifest = json.loads((out_dir / MANIFEST).read_text(encoding="utf-8"))
         invoices, credits = corpus.invoices, corpus.credits
@@ -93,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"wrote {name:18s} {corpus_manifest['rows'][name]:>7d} rows  {digests[name][:12]}")
         print(f"wrote {MANIFEST}")
         print(f"injected {corpus.defects['achieved']}")
+        print(f"injected into the ledger {corpus.gl_defects['achieved']}")
         print(f"censored credits past the window end: {corpus.censored_credits}")
 
     payload = measure(invoices, credits, args.coverage)
@@ -102,6 +109,7 @@ def main(argv: list[str] | None = None) -> int:
         "rows": corpus_manifest["rows"],
         "censored_credits": corpus_manifest["censored_credits"],
         "injected": corpus_manifest["injected"],
+        "injected_into_the_ledger": corpus_manifest["injected_into_the_ledger"],
     }
     payload["rebuilt_by"] = "python3 scripts/build_corpus.py"
     manifest.write(LAG_MEASUREMENT, payload)

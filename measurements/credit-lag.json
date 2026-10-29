@@ -24,8 +24,23 @@
         "reassigned_product_line": 4
       }
     },
+    "injected_into_the_ledger": {
+      "achieved": {
+        "amount_keyed_wrong": 5,
+        "orphan_entry": 4,
+        "posted_to_a_later_period": 11,
+        "unposted_document": 7
+      },
+      "requested": {
+        "amount_keyed_wrong": 5,
+        "orphan_entry": 4,
+        "posted_to_a_later_period": 11,
+        "unposted_document": 7
+      }
+    },
     "rows": {
       "credit_memos.csv": 3591,
+      "gl_entries.csv": 17412,
       "invoice_lines.csv": 20446,
       "invoices.csv": 6912,
       "partners.csv": 40,

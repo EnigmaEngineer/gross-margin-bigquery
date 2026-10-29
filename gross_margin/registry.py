@@ -24,6 +24,15 @@ ARTIFACTS: dict[str, tuple[str, ...]] = {
         "unit_price_usd",
         "unit_cost_usd",
     ),
+    "gl_entries.csv": (
+        "je_id",
+        "period",
+        "account",
+        "source_type",
+        "source_id",
+        "amount_usd",
+        "posted_date",
+    ),
     "credit_memos.csv": (
         "credit_id",
         "vendor_doc_no",

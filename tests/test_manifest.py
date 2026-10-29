@@ -13,7 +13,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from gross_margin import discrepancies, lag, manifest
+from gross_margin import discrepancies, ledger, lag, manifest
 from gross_margin.generate import build
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -82,6 +82,11 @@ def check_every_published_figure_re_derives_exactly():
     corpus = build(seed=published["corpus"]["seed"])
     requested = published["corpus"]["injected"]["requested"]
     discrepancies.apply(corpus, requested)
+    # The ledger is posted from billing after the discrepancy pass and broken
+    # after that, so a re-derivation that skipped it would report every ledger
+    # row as missing and name the generator as the cause.
+    ledger.post(corpus)
+    ledger.inject(corpus, published["corpus"]["injected_into_the_ledger"]["requested"])
 
     records, unmatched = lag.lag_records(corpus.invoices, corpus.credits)
     rebuilt = lag.summarise(records)
@@ -95,6 +100,7 @@ def check_every_published_figure_re_derives_exactly():
         "rows": {name: len(rows) for name, rows in corpus.tables().items()},
         "censored_credits": corpus.censored_credits,
         "injected": corpus.defects,
+        "injected_into_the_ledger": corpus.gl_defects,
     }
     rebuilt["rebuilt_by"] = published["rebuilt_by"]
 

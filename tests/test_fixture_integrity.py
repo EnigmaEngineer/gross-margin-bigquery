@@ -12,9 +12,7 @@ from __future__ import annotations
 import hashlib
 import json
 
-from gross_margin import discrepancies
-from gross_margin.generate import build
-from tests.corpus_fixture import corpus
+from tests.corpus_fixture import corpus, fresh
 
 
 def _digest(built) -> str:
@@ -23,9 +21,7 @@ def _digest(built) -> str:
 
 
 def check_the_shared_corpus_was_not_mutated_by_an_earlier_module():
-    fresh = build()
-    discrepancies.apply(fresh)
-    if _digest(corpus(True)) != _digest(fresh):
+    if _digest(corpus(True)) != _digest(fresh(True)):
         raise AssertionError(
             "the cached corpus no longer matches a fresh build at the same seed, so "
             "an earlier check edited rows other checks are reading"
@@ -33,6 +29,5 @@ def check_the_shared_corpus_was_not_mutated_by_an_earlier_module():
 
 
 def check_the_shared_clean_corpus_was_not_mutated_either():
-    fresh = build()
-    if _digest(corpus(False)) != _digest(fresh):
+    if _digest(corpus(False)) != _digest(fresh(False)):
         raise AssertionError("the cached clean corpus was edited in place")

@@ -120,8 +120,10 @@ class Corpus:
     invoices: list[dict] = field(default_factory=list)
     lines: list[dict] = field(default_factory=list)
     credits: list[dict] = field(default_factory=list)
+    gl_entries: list[dict] = field(default_factory=list)
     censored_credits: int = 0
     defects: dict[str, int] = field(default_factory=dict)
+    gl_defects: dict[str, int] = field(default_factory=dict)
 
     def tables(self) -> dict[str, list[dict]]:
         return {
@@ -132,6 +134,7 @@ class Corpus:
             "invoices.csv": self.invoices,
             "invoice_lines.csv": self.lines,
             "credit_memos.csv": self.credits,
+            "gl_entries.csv": self.gl_entries,
         }
 
 
@@ -338,6 +341,7 @@ def write(corpus: Corpus, out_dir: Path) -> dict[str, str]:
         "rows": {name: len(rows) for name, rows in corpus.tables().items()},
         "censored_credits": corpus.censored_credits,
         "injected": corpus.defects,
+        "injected_into_the_ledger": corpus.gl_defects,
         "digests": digests,
     }
     manifest_path = out_dir / MANIFEST
