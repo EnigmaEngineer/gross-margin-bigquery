@@ -92,3 +92,54 @@ models:
     columns:
       - name: line_id
         tests: [unique, not_null]
+
+  - name: fct_gl_posting
+    description: >
+      Document grain with both sides on one row. One row per billing document per
+      account, plus a row for every ledger entry whose document billing does not
+      hold. match_class says which of the five cases a row is.
+    columns:
+      - name: account
+        tests: [not_null]
+      - name: match_class
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - matched_same_period
+                - matched_ledger_is_later
+                - matched_ledger_is_earlier
+                - in_billing_not_in_ledger
+                - in_ledger_not_in_billing
+      - name: difference_cents
+        tests: [not_null]
+
+  - name: recon_billing_to_gl
+    description: >
+      Period and account grain. The variance between the two systems split into
+      timing, which clears next period, and a break, which does not. The split
+      is exact in whole cents and a singular test asserts it. Timing nets to zero
+      over the whole corpus, because moving money between periods cannot create
+      any, and a second test asserts that too.
+    columns:
+      - name: period
+        tests: [not_null]
+      - name: account
+        tests: [not_null]
+      - name: variance_cents
+        tests: [not_null]
+      - name: break_cents
+        tests: [not_null]
+
+  - name: alert_late_credit_arrival
+    description: >
+      One row per placeable credit that arrived later than the reconciliation
+      reopens, so the period it adjusts was closed before the credit existed.
+      stale_period is the period whose margin is now wrong.
+    columns:
+      - name: credit_id
+        tests: [unique, not_null]
+      - name: stale_period
+        tests: [not_null]
+      - name: days_past_the_window
+        tests: [not_null]
