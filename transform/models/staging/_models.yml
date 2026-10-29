@@ -95,3 +95,18 @@ models:
                 values: ["cost", "revenue"]
       - name: posted_date
         tests: [not_null]
+
+  - name: stg_gl_entries
+    description: >
+      The ledger as it lands. period is derived from posted_date rather than
+      taken from the ledger's own label, and the two are compared so that an
+      entry filed under a period its date does not fall in is visible.
+    columns:
+      - name: je_id
+        tests: [unique, not_null]
+      - name: account
+        tests: [not_null]
+      - name: amount_cents
+        tests: [not_null]
+      - name: posted_date
+        tests: [not_null]

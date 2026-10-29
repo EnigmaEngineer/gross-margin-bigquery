@@ -16,3 +16,4 @@ sources:
       - name: invoices
       - name: invoice_lines
       - name: credit_memos
+      - name: gl_entries

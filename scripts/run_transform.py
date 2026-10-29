@@ -58,6 +58,9 @@ MART_TABLES = (
     "main_marts.credit_rollup_by_line",
     "main_marts.fct_invoice_line_margin",
     "main_marts.fct_credit_memo",
+    "main_marts.fct_gl_posting",
+    "main_marts.recon_billing_to_gl",
+    "main_marts.alert_late_credit_arrival",
     "main_marts.margin_by_vendor",
     "main_marts.margin_by_partner",
     "main_marts.margin_by_product_line",
@@ -221,6 +224,28 @@ def duckdb_shape(db_path: Path) -> dict:
             "select count(*), coalesce(sum(abs(margin_moved_cents)), 0) "
             "from main_marts.margin_by_vendor where margin_moved_cents <> 0"
         ).fetchone()
+        # The reconciliation, summarised. The absolute total beside the signed
+        # one is deliberate. The signed period shift is zero because moving a
+        # document between two periods cannot create money, and a reader who
+        # saw only that would conclude there was no timing variance at all.
+        recon = con.execute(
+            "select count(*), "
+            "sum(case when variance_cents <> 0 then 1 else 0 end), "
+            "sum(case when break_cents <> 0 then 1 else 0 end), "
+            "sum(variance_cents), sum(period_shift_cents), sum(break_cents), "
+            "sum(abs(variance_cents)), sum(abs(period_shift_cents)), "
+            "sum(abs(break_cents)) "
+            "from main_marts.recon_billing_to_gl"
+        ).fetchone()
+        match_classes = con.execute(
+            "select match_class, count(*) from main_marts.fct_gl_posting "
+            "group by 1 order by 1"
+        ).fetchall()
+        alerts = con.execute(
+            "select count(*), coalesce(max(observable_lag_days), 0), "
+            "coalesce(min(days_past_the_window), 0) "
+            "from main_marts.alert_late_credit_arrival"
+        ).fetchone()
         # Asks for the floats by name rather than listing the exact types that
         # are allowed. An allow list would flag a new decimal width as a defect
         # and the thing being guarded against is a float.
@@ -247,6 +272,29 @@ def duckdb_shape(db_path: Path) -> dict:
             "unplaceable": credits[1],
             "later_posting_of_a_duplicated_document": credits[2],
             "exceeding_the_line_they_adjust": credits[3],
+        },
+        "reconciliation": {
+            "periods_and_accounts": recon[0],
+            "rows_with_a_variance": recon[1],
+            "rows_with_a_break": recon[2],
+            "signed_cents": {
+                "variance": int(recon[3]),
+                "period_shift": int(recon[4]),
+                "break": int(recon[5]),
+            },
+            "absolute_cents": {
+                "variance": int(recon[6]),
+                "period_shift": int(recon[7]),
+                "break": int(recon[8]),
+            },
+            "documents_by_match_class": {
+                name: count for name, count in match_classes
+            },
+            "late_arrival_alerts": {
+                "credits": alerts[0],
+                "largest_observable_lag_days": int(alerts[1]),
+                "smallest_margin_past_the_window_days": int(alerts[2]),
+            },
         },
         "as_of_join": {
             "lines_on_a_reassigned_product": reassigned[0],

@@ -55,10 +55,10 @@
   "dbt_build": {
     "error": 0,
     "no-op": 0,
-    "pass": 75,
+    "pass": 101,
     "reused": 0,
     "skip": 0,
-    "total": 75,
+    "total": 101,
     "warn": 0
   },
   "finance_queries": {
@@ -111,20 +111,49 @@
   },
   "nodes": {
     "analyses": 3,
-    "data_tests": 58,
-    "models": 17,
-    "sources": 7
+    "data_tests": 80,
+    "models": 21,
+    "sources": 8
   },
   "rebuilt_by": "python3 scripts/run_transform.py",
+  "reconciliation": {
+    "absolute_cents": {
+      "break": 63090771,
+      "period_shift": 3655143686,
+      "variance": 3668673957
+    },
+    "documents_by_match_class": {
+      "in_billing_not_in_ledger": 7,
+      "in_ledger_not_in_billing": 4,
+      "matched_ledger_is_later": 1500,
+      "matched_same_period": 15908
+    },
+    "late_arrival_alerts": {
+      "credits": 1,
+      "largest_observable_lag_days": 164,
+      "smallest_margin_past_the_window_days": 14
+    },
+    "periods_and_accounts": 98,
+    "rows_with_a_break": 16,
+    "rows_with_a_variance": 58,
+    "signed_cents": {
+      "break": -21963185,
+      "period_shift": 0,
+      "variance": -21963185
+    }
+  },
   "rows": {
+    "main_marts.alert_late_credit_arrival": 1,
     "main_marts.credit_rollup_by_line": 20446,
     "main_marts.dim_product_version": 124,
     "main_marts.fct_credit_allocation": 192572,
     "main_marts.fct_credit_memo": 3591,
+    "main_marts.fct_gl_posting": 17419,
     "main_marts.fct_invoice_line_margin": 20446,
     "main_marts.margin_by_partner": 978,
     "main_marts.margin_by_product_line": 144,
     "main_marts.margin_by_vendor": 336,
+    "main_marts.recon_billing_to_gl": 98,
     "main_marts.scan_margin_lines_clustered": 20446,
     "main_marts.scan_margin_lines_unclustered": 20446
   },
