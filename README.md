@@ -134,7 +134,7 @@ The models are written for BigQuery and verified against DuckDB on every run.
 Nobody here holds a BigQuery project, so a layer that could only be exercised
 against one would ship untested.
 
-17 models and 58 data tests, all passing on
+21 models and 80 data tests, all passing on
 DuckDB. Seven staging views cast the landing text into exact decimals, and the
 facts and marts sit above them. The scan pair exists to be queried rather than
 read.
@@ -153,6 +153,9 @@ refuses any of those spellings written into a model.
 | fct_credit_memo | 3,591 |
 | fct_credit_allocation | 192,572 |
 | credit_rollup_by_line | 20,446 |
+| fct_gl_posting | 17,419 |
+| recon_billing_to_gl | 98 |
+| alert_late_credit_arrival | 1 |
 | margin_by_vendor | 336 |
 | margin_by_partner | 978 |
 | margin_by_product_line | 144 |
@@ -252,6 +255,95 @@ because the generator writes it that way, so the figure is zero by construction
 and says nothing about a real feed. What would make it non zero is a backdated
 posting or a replayed load, and neither exists here.
 
+## The window was set from a maximum, and a maximum is not a bound
+
+The allocation lookback was first declared at 180 days, and the argument for it
+was that this made it a bound rather than a tuned threshold, because the largest credit arrival anywhere
+in the corpus was 164 days and 180 is wider than that. The reasoning is the part
+that was wrong, and `scripts/window_spread.py` is what shows it. The script
+regenerates the whole corpus at five seeds and refits every window figure on each
+one.
+
+| seed | pooled 95th | price_protection | return_credit | volume_rebate | largest arrival |
+|---|---|---|---|---|---|
+| 20260428 | 105 | 20 | 49 | 124 | 164 |
+| 20260429 | 108 | 20 | 49 | 125 | 174 |
+| 20260430 | 108 | 20 | 51 | 126 | 164 |
+| 20260501 | 109 | 20 | 52 | 127 | 216 |
+| 20260502 | 105 | 20 | 54 | 122 | 194 |
+
+The quantiles hold still. The pooled 95th centile moves 4 days across those
+seeds and the 99th moves 6 days, from 125 to 131. The largest arrival moves 52 days,
+from 164 to 216, and it is the figure the window was derived from.
+
+So 180 days is not a bound. It leaves a credit outside itself on two of the five
+seeds. That is a small miss in money and it is not a small miss in reasoning,
+because the number was chosen specifically to avoid being a threshold and it was
+a threshold the whole time. A sample maximum is the largest draw so far. On an
+arrival distribution with a long right tail it grows with the number of draws, so
+there is no width at which it stops being a draw.
+
+The reconciliation window is derived from the centile instead. `recon_reopen_days`
+is 150, which sits 19 days above the worst 99th centile over those five seeds,
+and the README and the project file both state it with its coverage rather than
+as a bound. `tests/test_recon.py` asserts the derivation rather than the number,
+so changing the variable without re-running the refit fails the suite.
+
+The rest of the tail is the alert's job, and that is the honest division of
+labour. Nothing covers a tail by being wide enough.
+
+## Billing against the general ledger, by period
+
+`gl_entries.csv` is the second record of the same money. It is posted from
+billing by `gross_margin/ledger.py` and then broken on purpose, which is stated
+here rather than buried: the reconciliation recovers defects this repository
+injected, so the count of breaks is a property of the request in that module. The
+arithmetic and the period attribution are what is real.
+
+One difference is not injected at all and it is the bulk of what a period
+comparison shows. An invoice billed in the close freeze at the end of a month
+posts to the ledger in the following month, because `gross_margin/calendar.py`
+says accounts payable was shut. Nobody has lost anything and it clears by itself.
+
+`recon_billing_to_gl` splits every period and account into the two terms, in
+whole cents.
+
+| term | what it means | who has to act |
+|---|---|---|
+| period shift | one document, two periods | nobody |
+| break | unposted, orphaned, or keyed at a different amount | somebody |
+
+Over this corpus the gross variance across 98 period and account rows is
+$36,686,739.57. Of that, $36,551,436.86 is period shift and $630,907.71 is a
+break, so 99.63 percent of the gross variance resolves with nobody touching it.
+58 rows carry a variance and 16 carry a break. The signed period shift is
+$0.00 exactly, because moving a document between two periods cannot create money,
+and a dbt test asserts that rather than trusting it.
+
+The break divides into $204,406.73 billing raised and the ledger never received,
+$155,269.78 posted with no billing document behind it, and -$268,768.80 keyed at
+a different amount.
+
+That split is the point of the model. A period total says March is short. It does
+not say whether March is short because an invoice is missing or because an
+invoice was billed on the 31st, and those take very different amounts of
+somebody's week.
+
+### The alert
+
+`alert_late_credit_arrival` holds every placeable credit that arrived later than
+the reconciliation reopens. A row there means the period the credit adjusts was
+closed before the credit existed, so that period's margin is stale and somebody
+has to decide whether to restate it.
+
+This corpus produces one. `CM0001949` is a volume rebate worth $1,931.69 that
+arrived 164 days after its invoice, 14 days past the window, against a period of
+2025-07 while the ledger posted it in 2025-12.
+
+One row is the right size for this corpus and it is not evidence that the alert
+is well tuned. The seed refit above says the arrival tail reaches at least 216
+days, so a different draw of the same business puts more rows here.
+
 ## Proving it on numbers a person can check
 
 Twenty thousand lines cannot be verified by reading them. `scripts/allocation_fixture.py`
@@ -267,6 +359,25 @@ refuses to proceed unless that credit's invoice is outside a window of the same
 length, so the run is a test of the anchor rather than of the window. The third
 appends a credit backdated past the window and asserts it is missed, because a
 window that cannot miss anything is not a window.
+
+### The reconciliation on numbers a person can check
+
+`scripts/recon_fixture.py` is the same idea for the reconciliation. Three
+invoices, two credits and eight ledger entries. The expected variance, period
+shift and break for every period and account were worked out on paper and
+written into the script as literals.
+
+It exists because of a defect it caught. The first version of the model moved the
+billing amount between periods when the two systems disagreed about which period a
+document belonged to. A document that is both in the wrong period and at the
+wrong amount then had its amount difference counted as a period shift, which says
+it will clear next month, and it will not. The variance still added up, so the
+decomposition test passed either way.
+
+No row in the generated corpus carries both defects at once. Under the first
+version the full build came back with 101 of 101 checks passing, and the six row
+fixture failed on `the_period_shift_nets_to_zero_over_the_corpus`. Twenty
+thousand lines said the model was fine and six said it was not.
 
 ## Bytes scanned, and why there is no number here
 
@@ -370,5 +481,30 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
   quoting it would fall through to `unallocated` rather than spreading. No line
   in this corpus is in that state, so the path is reasoned about and not
   exercised.
+- The ledger is not an independent record. `gross_margin/ledger.py` posts it from
+  billing and then breaks it, so the reconciliation recovers injected defects
+  rather than defects that arose on their own. The count of breaks is a property
+  of the request in that module. What is real is the arithmetic, the period
+  attribution and the split.
+- Four accounts stand in for a chart of accounts. A real distributor posts to
+  hundreds, with mappings that are themselves a source of breaks, and none of
+  that is modelled.
+- `stg_gl_entries` flags an entry whose own period label disagrees with its
+  posted date. No entry in this corpus does, because the generator writes the
+  two together, so that flag is reasoned about and never true.
+- The reconciliation reopens nothing. `inside_the_reopen_window` is a label on a
+  row and no process in this repository acts on it, so the window is a declared
+  depth rather than a scheduled behaviour.
+- The alert holds one row. One row is the right size for this corpus and it is
+  not evidence that the threshold is well chosen. The seed refit says the arrival
+  tail reaches at least 216 days, so another draw of the same business puts more
+  rows there.
+- Five seeds is a spread and not a distribution. The refit reports the range over
+  five draws and nothing here computes an interval from it, because an interval
+  from five points would be a worse claim than the range.
+- `fct_gl_posting` is a full outer join over 17,419 ledger entries and 17,415
+  billing document rows, and nothing in the repo profiles it. At this size it
+  does not matter. On a real ledger the join key and its selectivity are the
+  thing to watch.
 - This file is long. Two of its sections are analysis that belongs in a `docs/`
   page, and moving them also moves tables a check grades in place.

@@ -1,0 +1,101 @@
+{
+  "alerts": [
+    {
+      "credit_id": "CM2",
+      "observable_lag_days": 230,
+      "posted_in_period": "2025-09",
+      "stale_period": "2025-01"
+    }
+  ],
+  "period_shift_cents_over_the_fixture": 0,
+  "rebuilt_by": "python3 scripts/recon_fixture.py",
+  "reopen_window_days": 150,
+  "rows": [
+    {
+      "account": "4000-revenue",
+      "break_cents": 0,
+      "period": "2025-01",
+      "period_shift_cents": 50000,
+      "variance_cents": 50000
+    },
+    {
+      "account": "5000-cost-of-goods",
+      "break_cents": -12000,
+      "period": "2025-01",
+      "period_shift_cents": 44000,
+      "variance_cents": 32000
+    },
+    {
+      "account": "4000-revenue",
+      "break_cents": -10000,
+      "period": "2025-02",
+      "period_shift_cents": -50000,
+      "variance_cents": -60000
+    },
+    {
+      "account": "5000-cost-of-goods",
+      "break_cents": 0,
+      "period": "2025-02",
+      "period_shift_cents": -44000,
+      "variance_cents": -44000
+    },
+    {
+      "account": "5100-vendor-credits",
+      "break_cents": 0,
+      "period": "2025-02",
+      "period_shift_cents": 0,
+      "variance_cents": 0
+    },
+    {
+      "account": "5100-vendor-credits",
+      "break_cents": 0,
+      "period": "2025-09",
+      "period_shift_cents": 0,
+      "variance_cents": 0
+    }
+  ],
+  "terms": {
+    "2025-01 4000-revenue": {
+      "amount_difference_cents": 0,
+      "awaiting_the_ledger_cents": 50000,
+      "from_another_period_cents": 0,
+      "ledger_only_cents": 0,
+      "unposted_cents": 0
+    },
+    "2025-01 5000-cost-of-goods": {
+      "amount_difference_cents": -12000,
+      "awaiting_the_ledger_cents": 44000,
+      "from_another_period_cents": 0,
+      "ledger_only_cents": 0,
+      "unposted_cents": 0
+    },
+    "2025-02 4000-revenue": {
+      "amount_difference_cents": 0,
+      "awaiting_the_ledger_cents": 0,
+      "from_another_period_cents": 50000,
+      "ledger_only_cents": 30000,
+      "unposted_cents": 20000
+    },
+    "2025-02 5000-cost-of-goods": {
+      "amount_difference_cents": 0,
+      "awaiting_the_ledger_cents": 0,
+      "from_another_period_cents": 44000,
+      "ledger_only_cents": 0,
+      "unposted_cents": 0
+    },
+    "2025-02 5100-vendor-credits": {
+      "amount_difference_cents": 0,
+      "awaiting_the_ledger_cents": 0,
+      "from_another_period_cents": 0,
+      "ledger_only_cents": 0,
+      "unposted_cents": 0
+    },
+    "2025-09 5100-vendor-credits": {
+      "amount_difference_cents": 0,
+      "awaiting_the_ledger_cents": 0,
+      "from_another_period_cents": 0,
+      "ledger_only_cents": 0,
+      "unposted_cents": 0
+    }
+  }
+}
