@@ -72,11 +72,22 @@
   replaces whole credits rather than whole partitions. A credit that lands today
   rewrites its allocations however old the lines are.
 
-  What the window still has to be large enough for is a credit arriving out of
-  order, posted before the newest row already in the table. scripts/lookback_probe.py
-  measures how many credits in this corpus each candidate window would miss on
-  each anchor, and the day the window becomes an alert threshold is the day a
-  number gets chosen. Until then the default is deliberately generous.
+  What this window has to be large enough for is a credit arriving out of order,
+  posted before the newest row already in the table. That is an arrival order
+  depth and it is NOT the invoice to posting lag, which is the quantity 180 was
+  originally justified against. The two are different measurements and the
+  confusion is worth naming, because the number happened to be generous enough
+  either way.
+
+  Nothing in this corpus can size this window. Arrival order is posting order
+  here, so the out of order depth is zero by construction, and scripts/lookback_probe.py
+  publishes that zero with the reason attached rather than as a result. So 180
+  stays, declared as a margin against a feed that does not exist yet rather than
+  as anything measured.
+
+  The window that IS measured is the reconciliation's, in
+  transform/macros/reconciliation.sql. It is set from a centile rather than from
+  a maximum, and scripts/window_spread.py is the reason why.
 #}
 {% macro allocation_lookback_start() %}
   {%- set days = var('allocation_lookback_days') | int -%}

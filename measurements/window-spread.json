@@ -1,0 +1,246 @@
+{
+  "candidate_windows": [
+    105,
+    124,
+    180,
+    220,
+    260,
+    365
+  ],
+  "coverage_target_pct": 95.0,
+  "credits_outside_each_candidate_window": {
+    "105": {
+      "seeds_with_credits_outside": [
+        20260428,
+        20260429,
+        20260430,
+        20260501,
+        20260502
+      ],
+      "worst_seed_credits_outside": 192
+    },
+    "124": {
+      "seeds_with_credits_outside": [
+        20260428,
+        20260429,
+        20260430,
+        20260501,
+        20260502
+      ],
+      "worst_seed_credits_outside": 59
+    },
+    "180": {
+      "seeds_with_credits_outside": [
+        20260501,
+        20260502
+      ],
+      "worst_seed_credits_outside": 1
+    },
+    "220": {
+      "seeds_with_credits_outside": [],
+      "worst_seed_credits_outside": 0
+    },
+    "260": {
+      "seeds_with_credits_outside": [],
+      "worst_seed_credits_outside": 0
+    },
+    "365": {
+      "seeds_with_credits_outside": [],
+      "worst_seed_credits_outside": 0
+    }
+  },
+  "fits": [
+    {
+      "censored_credits": 209,
+      "credits": 3588,
+      "credits_outside_each_candidate_window": {
+        "105": 168,
+        "124": 43,
+        "180": 0,
+        "220": 0,
+        "260": 0,
+        "365": 0
+      },
+      "credits_with_no_matching_invoice": 3,
+      "keyed_window_days": {
+        "price_protection": 20,
+        "return_credit": 49,
+        "volume_rebate": 124
+      },
+      "observable_lag_days": {
+        "max": 164,
+        "p50": 18,
+        "p90": 88,
+        "p95": 105,
+        "p99": 126
+      },
+      "pooled_window_days": 105,
+      "seed": 20260428,
+      "types_under_covered_by_the_pooled_window": [
+        "volume_rebate"
+      ]
+    },
+    {
+      "censored_credits": 223,
+      "credits": 3379,
+      "credits_outside_each_candidate_window": {
+        "105": 181,
+        "124": 49,
+        "180": 0,
+        "220": 0,
+        "260": 0,
+        "365": 0
+      },
+      "credits_with_no_matching_invoice": 3,
+      "keyed_window_days": {
+        "price_protection": 20,
+        "return_credit": 49,
+        "volume_rebate": 125
+      },
+      "observable_lag_days": {
+        "max": 174,
+        "p50": 19,
+        "p90": 89,
+        "p95": 108,
+        "p99": 131
+      },
+      "pooled_window_days": 108,
+      "seed": 20260429,
+      "types_under_covered_by_the_pooled_window": [
+        "volume_rebate"
+      ]
+    },
+    {
+      "censored_credits": 235,
+      "credits": 3433,
+      "credits_outside_each_candidate_window": {
+        "105": 188,
+        "124": 59,
+        "180": 0,
+        "220": 0,
+        "260": 0,
+        "365": 0
+      },
+      "credits_with_no_matching_invoice": 3,
+      "keyed_window_days": {
+        "price_protection": 20,
+        "return_credit": 51,
+        "volume_rebate": 126
+      },
+      "observable_lag_days": {
+        "max": 164,
+        "p50": 19,
+        "p90": 90,
+        "p95": 108,
+        "p99": 131
+      },
+      "pooled_window_days": 108,
+      "seed": 20260430,
+      "types_under_covered_by_the_pooled_window": [
+        "volume_rebate"
+      ]
+    },
+    {
+      "censored_credits": 217,
+      "credits": 3423,
+      "credits_outside_each_candidate_window": {
+        "105": 192,
+        "124": 58,
+        "180": 1,
+        "220": 0,
+        "260": 0,
+        "365": 0
+      },
+      "credits_with_no_matching_invoice": 4,
+      "keyed_window_days": {
+        "price_protection": 20,
+        "return_credit": 52,
+        "volume_rebate": 127
+      },
+      "observable_lag_days": {
+        "max": 216,
+        "p50": 18,
+        "p90": 91,
+        "p95": 109,
+        "p99": 131
+      },
+      "pooled_window_days": 109,
+      "seed": 20260501,
+      "types_under_covered_by_the_pooled_window": [
+        "volume_rebate"
+      ]
+    },
+    {
+      "censored_credits": 191,
+      "credits": 3517,
+      "credits_outside_each_candidate_window": {
+        "105": 161,
+        "124": 36,
+        "180": 1,
+        "220": 0,
+        "260": 0,
+        "365": 0
+      },
+      "credits_with_no_matching_invoice": 3,
+      "keyed_window_days": {
+        "price_protection": 20,
+        "return_credit": 54,
+        "volume_rebate": 122
+      },
+      "observable_lag_days": {
+        "max": 194,
+        "p50": 19,
+        "p90": 87,
+        "p95": 105,
+        "p99": 125
+      },
+      "pooled_window_days": 105,
+      "seed": 20260502,
+      "types_under_covered_by_the_pooled_window": [
+        "volume_rebate"
+      ]
+    }
+  ],
+  "largest_observable_lag_over_every_seed_days": 216,
+  "published_pooled_window_days": 105,
+  "published_seed": 20260428,
+  "rebuilt_by": "python3 scripts/window_spread.py",
+  "seeds": [
+    20260428,
+    20260429,
+    20260430,
+    20260501,
+    20260502
+  ],
+  "smallest_candidate_that_held_on_every_seed": 220,
+  "spread": {
+    "keyed_window_days": {
+      "price_protection": {
+        "max": 20,
+        "min": 20,
+        "range": 0
+      },
+      "return_credit": {
+        "max": 54,
+        "min": 49,
+        "range": 5
+      },
+      "volume_rebate": {
+        "max": 127,
+        "min": 122,
+        "range": 5
+      }
+    },
+    "largest_observable_lag_days": {
+      "max": 216,
+      "min": 164,
+      "range": 52
+    },
+    "pooled_window_days": {
+      "max": 109,
+      "min": 105,
+      "range": 4
+    }
+  },
+  "widest_keyed_window_over_every_seed_days": 127
+}

@@ -23,6 +23,16 @@ vars:
   # so nothing here should be read as a tuned value.
   allocation_lookback_days: 180
 
+  # How far back the billing to ledger reconciliation reopens closed periods,
+  # in days of ledger posting date. 150 sits 19 days above the worst pooled 99th
+  # centile of credit arrival over the five seeds scripts/window_spread.py
+  # refits, which is 131. It is declared with its coverage and not as a bound,
+  # because the maximum arrival over those same seeds moves 52 days and no
+  # finite window bounds that tail. The credits outside it are what
+  # alert_late_credit_arrival exists to raise. transform/macros/reconciliation.sql
+  # carries the argument.
+  recon_reopen_days: 150
+
 models:
   gross_margin:
     staging:
