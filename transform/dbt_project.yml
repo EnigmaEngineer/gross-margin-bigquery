@@ -33,6 +33,16 @@ vars:
   # carries the argument.
   recon_reopen_days: 150
 
+  # The policy tag the restricted columns carry on BigQuery. Empty by default and
+  # it has to stay empty, because the real value names a project and a taxonomy
+  # that do not exist yet. infra/access.tf creates the tag and its output is
+  # where the value comes from once there is a project to create it in.
+  #
+  # The columns that carry it are not listed here. They are listed in
+  # gross_margin/access.py and tests/test_access.py reads the parsed manifest to
+  # check that the set in the yaml is the set the rule list asks for.
+  cost_policy_tag: ""
+
 models:
   gross_margin:
     staging:
@@ -41,8 +51,17 @@ models:
     marts:
       +materialized: table
       +schema: marts
+      # Required for the column policy tags in models/marts/_models.yml to be
+      # applied. Without it dbt records the tag in the manifest and never sends
+      # it, which is a column security story that parses and does nothing.
+      +persist_docs:
+        columns: true
     scan:
       # The scan pair exists to be queried, not to be read. Both halves hold the
       # same rows so that the only difference a query sees is the physical layout.
+      # That makes each of them a second copy of every restricted column, which is
+      # why they carry the same policy tags the line table does.
       +materialized: table
       +schema: marts
+      +persist_docs:
+        columns: true

@@ -17,8 +17,15 @@ models:
     columns:
       - name: line_id
         tests: [unique, not_null]
+      - name: extended_cost_usd
+        description: Vendor cost of the line. Restricted.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
       - name: invoiced_margin_usd
+        description: >
+          Revenue minus cost. Restricted for the same reason cost is, because
+          subtracting it from revenue returns cost to the cent.
         tests: [not_null]
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
       - name: invoice_date
         tests: [not_null]
 
@@ -61,8 +68,12 @@ models:
     columns:
       - name: vendor_id
         tests: [not_null]
+      - name: cost_usd
+        description: Restricted.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
       - name: invoiced_margin_usd
         tests: [not_null]
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
       - name: margin_after_allocated_credits_usd
         tests: [not_null]
 
@@ -70,6 +81,11 @@ models:
     columns:
       - name: period
         tests: [not_null]
+      - name: invoiced_margin_usd
+        description: >
+          Restricted. No column here is called cost and the quantity is still
+          present, because revenue minus this is the cost of the group.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
 
   - name: margin_by_product_line
     columns:
@@ -77,6 +93,12 @@ models:
         tests: [not_null]
       - name: period
         tests: [not_null]
+      - name: cost_usd
+        description: Restricted.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
+      - name: invoiced_margin_usd
+        description: Restricted.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
 
   - name: scan_margin_lines_unclustered
     description: >
@@ -84,6 +106,12 @@ models:
     columns:
       - name: line_id
         tests: [unique, not_null]
+      - name: extended_cost_usd
+        description: Restricted. The same cost the line table carries.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
+      - name: invoiced_margin_usd
+        description: Restricted. Revenue minus this returns cost.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
 
   - name: scan_margin_lines_clustered
     description: >
@@ -92,6 +120,12 @@ models:
     columns:
       - name: line_id
         tests: [unique, not_null]
+      - name: extended_cost_usd
+        description: Restricted. The same cost the line table carries.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
+      - name: invoiced_margin_usd
+        description: Restricted. Revenue minus this returns cost.
+        policy_tags: ["{{ var('cost_policy_tag') }}"]
 
   - name: fct_gl_posting
     description: >
