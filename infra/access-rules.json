@@ -1,0 +1,161 @@
+{
+  "restricted_quantity": "cost",
+  "roles": [
+    {
+      "may_read_cost": true,
+      "name": "finance_analyst"
+    },
+    {
+      "may_read_cost": false,
+      "name": "partner_ops"
+    },
+    {
+      "may_read_cost": false,
+      "name": "region_midwest_analyst"
+    },
+    {
+      "may_read_cost": false,
+      "name": "region_northeast_analyst"
+    },
+    {
+      "may_read_cost": false,
+      "name": "region_southeast_analyst"
+    },
+    {
+      "may_read_cost": false,
+      "name": "region_west_analyst"
+    }
+  ],
+  "row_access_policies": [
+    {
+      "filter_predicate": "true",
+      "policy_id": "fct_invoice_line_margin__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "fct_invoice_line_margin__partner_ops",
+      "role": "partner_ops",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "filter_predicate": "region in ('midwest')",
+      "policy_id": "fct_invoice_line_margin__region_midwest_analyst",
+      "role": "region_midwest_analyst",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "filter_predicate": "region in ('northeast')",
+      "policy_id": "fct_invoice_line_margin__region_northeast_analyst",
+      "role": "region_northeast_analyst",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "filter_predicate": "region in ('southeast')",
+      "policy_id": "fct_invoice_line_margin__region_southeast_analyst",
+      "role": "region_southeast_analyst",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "filter_predicate": "region in ('west')",
+      "policy_id": "fct_invoice_line_margin__region_west_analyst",
+      "role": "region_west_analyst",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "margin_by_partner__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "margin_by_partner__partner_ops",
+      "role": "partner_ops",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "filter_predicate": "region in ('midwest')",
+      "policy_id": "margin_by_partner__region_midwest_analyst",
+      "role": "region_midwest_analyst",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "filter_predicate": "region in ('northeast')",
+      "policy_id": "margin_by_partner__region_northeast_analyst",
+      "role": "region_northeast_analyst",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "filter_predicate": "region in ('southeast')",
+      "policy_id": "margin_by_partner__region_southeast_analyst",
+      "role": "region_southeast_analyst",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "filter_predicate": "region in ('west')",
+      "policy_id": "margin_by_partner__region_west_analyst",
+      "role": "region_west_analyst",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "scan_margin_lines_unclustered__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "scan_margin_lines_unclustered"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "scan_margin_lines_clustered__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "scan_margin_lines_clustered"
+    }
+  ],
+  "tagged_columns": [
+    {
+      "column": "extended_cost_usd",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "column": "invoiced_margin_usd",
+      "table_id": "fct_invoice_line_margin"
+    },
+    {
+      "column": "invoiced_margin_usd",
+      "table_id": "margin_by_partner"
+    },
+    {
+      "column": "cost_usd",
+      "table_id": "margin_by_vendor"
+    },
+    {
+      "column": "invoiced_margin_usd",
+      "table_id": "margin_by_vendor"
+    },
+    {
+      "column": "cost_usd",
+      "table_id": "margin_by_product_line"
+    },
+    {
+      "column": "invoiced_margin_usd",
+      "table_id": "margin_by_product_line"
+    },
+    {
+      "column": "extended_cost_usd",
+      "table_id": "scan_margin_lines_unclustered"
+    },
+    {
+      "column": "invoiced_margin_usd",
+      "table_id": "scan_margin_lines_unclustered"
+    },
+    {
+      "column": "extended_cost_usd",
+      "table_id": "scan_margin_lines_clustered"
+    },
+    {
+      "column": "invoiced_margin_usd",
+      "table_id": "scan_margin_lines_clustered"
+    }
+  ]
+}
