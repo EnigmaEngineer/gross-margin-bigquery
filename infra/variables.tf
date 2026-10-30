@@ -60,3 +60,16 @@ variable "budget_amount_usd" {
   type        = number
   default     = 25
 }
+
+variable "role_principals" {
+  # The service account email behind each role in access-rules.json. No default,
+  # for the same reason project_id has none. A plausible placeholder here would
+  # grant a row access policy to an account that does not exist, and BigQuery
+  # accepts that without complaint, so the policy would look applied and refuse
+  # everybody.
+  #
+  # Keyed by role name. A role in the rule list with no entry here fails at plan
+  # time on the map lookup, which is the behaviour worth having.
+  description = "Role name to service account email, for every role in access-rules.json."
+  type        = map(string)
+}
