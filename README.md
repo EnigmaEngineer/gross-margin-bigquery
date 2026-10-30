@@ -418,6 +418,26 @@ across a month, so vendor first should help query one most and query two least.
 Query three reads the whole history and may gain nothing. The probe is what would
 settle those three predictions.
 
+## Who can read what
+
+Two rules, written once in `gross_margin/access.py` and enforced twice. Regional
+roles read their own region. Roles that may not read cost cannot reach it by any
+route these marts offer. `docs/access-model.md` carries the design, the measured
+refusals and what is not covered.
+
+Two things are worth pulling out of it.
+
+Restricting the column named cost does not restrict cost. Margin is revenue minus
+cost, so a reader holding revenue and margin holds cost, and the probe recovers it
+on 20,446 of 20,446 rows to the cent from a variant that tagged only the cost
+column. Margin is withheld for that reason, which means a regional role reads
+revenue and not margin.
+
+Region arrives by a left join to the partner, so lines billed with no partner
+carry no region and no regional predicate matches them. 93 lines holding
+2,024,816.82 of revenue are reachable by no regional role, and the four regional
+reports therefore do not add up to the finance total.
+
 ## Infrastructure, written and not applied
 
 `infra/` holds a landing bucket, three BigQuery datasets, a build identity and a
@@ -437,6 +457,12 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
 
 - No BigQuery statement here has run. The models compile for it and are
   verified against DuckDB, so the layer is exercised and the warehouse is not.
+- The access rules are enforced locally by a view layer, and DuckDB has no role
+  system, so there is no grant to make and nothing holds a caller to them. The
+  rules are proven expressible and correct rather than proven binding.
+- The same cost sits below the protected layer. `stg_invoice_lines` carries
+  `extended_cost_usd` and `unit_cost_usd` with no tag on them, so the column
+  control rests on the reporting roles holding the marts dataset alone.
 - There is no bytes scanned figure, so the clustered and unclustered pair is a
   design with a test harness behind it and no result. `scripts/scan_probe.py`
   names what it waits on.
