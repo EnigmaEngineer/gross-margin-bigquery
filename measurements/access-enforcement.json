@@ -1,0 +1,137 @@
+{
+  "answer_key_queries": 20,
+  "answer_key_refusals": 0,
+  "attacks_the_control_also_refused": 0,
+  "column_attacks": 19,
+  "column_refusals": 19,
+  "cost_outside_the_protected_layer": {
+    "columns": 3,
+    "relations": 2,
+    "schemas": [
+      "main_staging",
+      "raw"
+    ],
+    "where": [
+      "main_staging.stg_invoice_lines.extended_cost_usd",
+      "main_staging.stg_invoice_lines.unit_cost_usd",
+      "raw.invoice_lines.unit_cost_usd"
+    ]
+  },
+  "leaky_variant": {
+    "cost_column_present_in_variant": false,
+    "rows_compared": 20446,
+    "rows_where_revenue_minus_margin_equals_cost": 20446
+  },
+  "marts_survey": {
+    "carriers": [
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "credit_rollup_by_line",
+        "restricted_columns_present": []
+      },
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "fct_invoice_line_margin",
+        "restricted_columns_present": [
+          "extended_cost_usd",
+          "extended_revenue_usd",
+          "invoiced_margin_usd"
+        ]
+      },
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "margin_by_partner",
+        "restricted_columns_present": [
+          "invoiced_margin_usd",
+          "revenue_usd"
+        ]
+      },
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "margin_by_product_line",
+        "restricted_columns_present": [
+          "cost_usd",
+          "invoiced_margin_usd",
+          "revenue_usd"
+        ]
+      },
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "margin_by_vendor",
+        "restricted_columns_present": [
+          "cost_usd",
+          "invoiced_margin_usd",
+          "revenue_usd"
+        ]
+      },
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "scan_margin_lines_clustered",
+        "restricted_columns_present": [
+          "extended_cost_usd",
+          "extended_revenue_usd",
+          "invoiced_margin_usd"
+        ]
+      },
+      {
+        "holds_a_revenue_and_margin_pair": true,
+        "in_rule_list": true,
+        "relation": "scan_margin_lines_unclustered",
+        "restricted_columns_present": [
+          "extended_cost_usd",
+          "extended_revenue_usd",
+          "invoiced_margin_usd"
+        ]
+      }
+    ],
+    "relations_carrying_the_quantity": 7,
+    "relations_in_marts_schema": 13,
+    "unprotected": []
+  },
+  "not_covered_by_the_view_layer": {
+    "base_columns_visible_in_information_schema": 18,
+    "base_relation_message": "",
+    "base_relation_still_readable": true
+  },
+  "relation_attacks": 28,
+  "relation_refusals": 28,
+  "relations": 8,
+  "roles": 6,
+  "row_scope_checks": 6,
+  "row_scope_matches": 6,
+  "rows": {
+    "finance_revenue_cents": 45412196299,
+    "finance_rows": 20446,
+    "per_regional_role": {
+      "region_midwest_analyst": {
+        "revenue_cents": 11101325896,
+        "rows": 5061
+      },
+      "region_northeast_analyst": {
+        "revenue_cents": 16549566653,
+        "rows": 7486
+      },
+      "region_southeast_analyst": {
+        "revenue_cents": 9176421789,
+        "rows": 4100
+      },
+      "region_west_analyst": {
+        "revenue_cents": 8382400279,
+        "rows": 3706
+      }
+    },
+    "regional_revenue_cents_summed": 45209714617,
+    "regional_rows_summed": 20353,
+    "revenue_cents_unaccounted_for": 0,
+    "rows_unaccounted_for": 0,
+    "unreachable_revenue_cents": 202481682,
+    "unreachable_rows": 93
+  },
+  "views_built": 20
+}
