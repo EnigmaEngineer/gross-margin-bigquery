@@ -153,7 +153,12 @@ def check_no_project_identifier_carries_a_default():
     filling it in.
     """
     code = _code("variables.tf")
-    for name in ("project_id", "bucket_name", "billing_account"):
+    # An image version names a Composer release and an Airflow release
+    # together. The set that exists is a function of the region and the day,
+    # so a typed value is a guess terraform validate cannot catch.
+    for name in (
+        "project_id", "bucket_name", "billing_account", "composer_image_version"
+    ):
         parts = code.split(f'variable "{name}"', 1)
         if len(parts) != 2:
             raise AssertionError(f"variables.tf declares no variable named {name}")

@@ -1,0 +1,10 @@
+{
+  "generated_by": "python3 scripts/emit_pipeline_pins.py",
+  "pypi_packages": {
+    "dbt-bigquery": "==1.12.1",
+    "dbt-core": "==1.12.6",
+    "dbt-duckdb": "==1.11.1",
+    "duckdb": "==1.5.6"
+  },
+  "source": "requirements.txt"
+}

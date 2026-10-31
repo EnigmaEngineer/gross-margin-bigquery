@@ -73,3 +73,12 @@ variable "role_principals" {
   description = "Role name to service account email, for every role in access-rules.json."
   type        = map(string)
 }
+
+variable "composer_image_version" {
+  # No default, for the same reason as project_id. An image version names a
+  # Composer release and an Airflow release together and the available set
+  # changes, so a value typed here would be a guess. `gcloud composer images
+  # list --location <region>` answers it against the project.
+  description = "Composer image version, which pins the Airflow release with it."
+  type        = string
+}
