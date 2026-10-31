@@ -1,0 +1,23 @@
+# What the DAG file imports, and NOT what the pipeline needs.
+#
+# Kept separate from requirements.txt on purpose, for two reasons that point the
+# same way.
+#
+# The check suite has to run on a machine with nothing installed, which is what
+# lets it grade a clean clone. Putting Airflow in requirements.txt would make
+# the whole project's declared dependency set include a scheduler that nothing
+# in gross_margin/ imports.
+#
+# And Cloud Composer PROVIDES Airflow. Its image is chosen by
+# composer_image_version, which pins the Composer release and the Airflow
+# release together, so installing apache-airflow through the environment's
+# pypi_packages is the one thing that is actively wrong there. That is why
+# scripts/emit_pipeline_pins.py reads requirements.txt alone and this file is
+# not part of the generated pin set.
+#
+# So these two are declared here to say what the DAG was parsed against, and
+# the parse that used them is recorded in measurements/dag-parse.json. Airflow 2
+# does not install on Python 3.13 at all, so the parse ran under 3.11 with its
+# own install directory.
+apache-airflow==2.11.2
+pendulum==3.3.0

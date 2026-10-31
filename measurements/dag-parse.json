@@ -1,0 +1,45 @@
+{
+  "airflow_version": "2.11.2",
+  "catchup": false,
+  "dag_id": "gross_margin_daily",
+  "edges": [
+    [
+      "build_corpus",
+      "transform"
+    ],
+    [
+      "transform",
+      "access_probe"
+    ],
+    [
+      "transform",
+      "recon_report"
+    ],
+    [
+      "transform",
+      "reopen_periods"
+    ]
+  ],
+  "import_errors": {},
+  "max_active_runs": 1,
+  "python": "3.11",
+  "rebuilt_by": "PYTHONPATH=<airflow> python3.11 scripts/dag_parse.py",
+  "schedule": "0 6 * * *",
+  "scheduled_run": false,
+  "task_ids": [
+    "access_probe",
+    "build_corpus",
+    "recon_report",
+    "reopen_periods",
+    "transform"
+  ],
+  "tasks": 5,
+  "topological_order": [
+    "build_corpus",
+    "transform",
+    "reopen_periods",
+    "recon_report",
+    "access_probe"
+  ],
+  "validate_raised": false
+}
