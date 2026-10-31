@@ -253,7 +253,25 @@ def _readme_flat() -> str:
     return " ".join((REPO_ROOT / "README.md").read_text(encoding="utf-8").split())
 
 
-def check_the_readme_lookback_table_comes_from_the_probe():
+def _published_prose_raw() -> str:
+    """The README and docs/ joined, line structure kept.
+
+    The lookback table moved into `docs/lookback-window.md` with the section
+    that argues for the window. The question this asks is whether the table a
+    reader sees was derived from the probe. Which published file carries it is
+    not part of that question.
+    """
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    for path in sorted((REPO_ROOT / "docs").glob("*.md")):
+        parts.append(path.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
+
+def _published_prose_flat() -> str:
+    return " ".join(_published_prose_raw().split())
+
+
+def check_the_published_lookback_table_comes_from_the_probe():
     """Four rows of a table nothing else re-derives.
 
     The allocation figures are graded next door against the shape measurement.
@@ -262,7 +280,7 @@ def check_the_readme_lookback_table_comes_from_the_probe():
     """
     probe = manifest.read(PROBE_FILE)
     by_window = {entry["window_days"]: entry for entry in probe["by_window"]}
-    text = _readme_flat()
+    text = _published_prose_flat()
     missing = []
     for window in (30, 90, 105, 180):
         if window not in by_window:
@@ -275,4 +293,4 @@ def check_the_readme_lookback_table_comes_from_the_probe():
         if row not in text:
             missing.append(row)
     if missing:
-        raise AssertionError(f"the README lookback table does not carry: {missing}")
+        raise AssertionError(f"no published file carries the lookback table rows: {missing}")

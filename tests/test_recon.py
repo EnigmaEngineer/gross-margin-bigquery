@@ -248,6 +248,25 @@ def check_the_measurement_names_the_command_that_rebuilds_it():
             raise AssertionError(f"{path.name} does not say how to rebuild it")
 
 
+def _published_prose_flat() -> str:
+    """The README and the documents beside it, as one whitespace collapsed string.
+
+    It was the README alone until the window argument moved into
+    `docs/lookback-window.md` to get that file's length down. Five figures
+    moved with it. A check reading only the README would have reported them
+    missing, and the fix that writes itself is to delete the check.
+
+    So the question this asks is whether the figures are stated somewhere a
+    reader outside the repository sees. That is what deriving them rather than
+    typing them was always about. The overclaim check made the same move when
+    the access prose went into `docs/`.
+    """
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    for path in sorted((REPO_ROOT / "docs").glob("*.md")):
+        parts.append(path.read_text(encoding="utf-8"))
+    return " ".join(" ".join(parts).split())
+
+
 def _readme_flat() -> str:
     """The README with whitespace collapsed, for the reason the other two README
     modules give. The file is hard wrapped and a figure usually straddles a
@@ -310,10 +329,23 @@ def check_the_readme_alert_row_matches_the_alert_table():
         raise AssertionError(f"the README's alert sentence is stale: {missing}")
 
 
-def check_the_readme_seed_table_matches_the_refit():
+def _published_prose_raw() -> str:
+    """The README and docs/ joined with the line structure kept.
+
+    The flattened version cannot grade a markdown table, because collapsing the
+    whitespace makes every row one line and a row search then matches across
+    rows.
+    """
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    for path in sorted((REPO_ROOT / "docs").glob("*.md")):
+        parts.append(path.read_text(encoding="utf-8"))
+    return "\n".join(parts)
+
+
+def check_the_published_seed_table_matches_the_refit():
     """The table has an address, so it is compared cell by cell."""
     spread = _spread()
-    text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    text = _published_prose_raw()
     for fit in spread["fits"]:
         keyed = fit["keyed_window_days"]
         row = (
@@ -325,12 +357,12 @@ def check_the_readme_seed_table_matches_the_refit():
             raise AssertionError(f"the seed table has no row reading {row!r}")
 
 
-def check_the_readme_states_the_spread_the_window_argument_rests_on():
+def check_the_published_prose_states_the_spread_the_window_rests_on():
     spread = _spread()
     pooled = spread["spread"]["pooled_window_days"]
     largest = spread["spread"]["largest_observable_lag_days"]
     p99 = [fit["observable_lag_days"]["p99"] for fit in spread["fits"]]
-    text = _readme_flat()
+    text = _published_prose_flat()
     expected = {
         "the pooled range": f"moves {pooled['range']} days across those",
         "the p99 range": f"the 99th moves {max(p99) - min(p99)} days, from {min(p99)} to {max(p99)}",
@@ -343,4 +375,4 @@ def check_the_readme_states_the_spread_the_window_argument_rests_on():
     }
     missing = {name: want for name, want in expected.items() if want not in text}
     if missing:
-        raise AssertionError(f"the README does not carry these figures: {missing}")
+        raise AssertionError(f"neither the README nor docs/ carries these figures: {missing}")

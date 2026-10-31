@@ -223,74 +223,15 @@ invoice and the named reading cannot place at all. Neither total is the true
 margin. The three credits nobody can place are in neither, and they are worth
 $27,518.56.
 
-## The lookback is on the arrival date, and that is the whole design
+## The lookback window
 
-The allocation model is incremental over a window. There are two dates it could
-measure that window against and they are not interchangeable.
-
-A credit arrives late. The invoice it adjusts can be eighteen months old. A
-window on `invoice_date` therefore reprocesses rows whose answers did not change
-and misses the rows whose answers did. A window on `posted_date` reaches a credit
-on the day it lands, however old the lines are, and the model replaces whole
-credits rather than whole partitions so an old line can be rewritten.
-
-`scripts/lookback_probe.py` measures what the same window length costs under each
-reading, over this corpus.
-
-| window | credits an invoice_date window misses | allocation rows it leaves wrong |
-|---|---|---|
-| 30 days | 1,197 | 177,185 |
-| 90 days | 333 | 67,036 |
-| 105 days | 168 | 33,413 |
-| 180 days | 0 | 0 |
-
-The second column is the one that matters. A missed rebate does not only lose its
-own amount. Every line it would have been spread over keeps a share it should not
-have, so 168 missed credits leave
-33,413 rows wrong.
-
-The same probe reports zero misses for the `posted_date` reading at every window,
-and that zero is worth nothing. Arrival order is posting order in this corpus
-because the generator writes it that way, so the figure is zero by construction
-and says nothing about a real feed. What would make it non zero is a backdated
-posting or a replayed load, and neither exists here.
-
-## The window was set from a maximum, and a maximum is not a bound
-
-The allocation lookback was first declared at 180 days, and the argument for it
-was that this made it a bound rather than a tuned threshold, because the largest credit arrival anywhere
-in the corpus was 164 days and 180 is wider than that. The reasoning is the part
-that was wrong, and `scripts/window_spread.py` is what shows it. The script
-regenerates the whole corpus at five seeds and refits every window figure on each
-one.
-
-| seed | pooled 95th | price_protection | return_credit | volume_rebate | largest arrival |
-|---|---|---|---|---|---|
-| 20260428 | 105 | 20 | 49 | 124 | 164 |
-| 20260429 | 108 | 20 | 49 | 125 | 174 |
-| 20260430 | 108 | 20 | 51 | 126 | 164 |
-| 20260501 | 109 | 20 | 52 | 127 | 216 |
-| 20260502 | 105 | 20 | 54 | 122 | 194 |
-
-The quantiles hold still. The pooled 95th centile moves 4 days across those
-seeds and the 99th moves 6 days, from 125 to 131. The largest arrival moves 52 days,
-from 164 to 216, and it is the figure the window was derived from.
-
-So 180 days is not a bound. It leaves a credit outside itself on two of the five
-seeds. That is a small miss in money and it is not a small miss in reasoning,
-because the number was chosen specifically to avoid being a threshold and it was
-a threshold the whole time. A sample maximum is the largest draw so far. On an
-arrival distribution with a long right tail it grows with the number of draws, so
-there is no width at which it stops being a draw.
-
-The reconciliation window is derived from the centile instead. `recon_reopen_days`
-is 150, which sits 19 days above the worst 99th centile over those five seeds,
-and the README and the project file both state it with its coverage rather than
-as a bound. `tests/test_recon.py` asserts the derivation rather than the number,
-so changing the variable without re-running the refit fails the suite.
-
-The rest of the tail is the alert's job, and that is the honest division of
-labour. Nothing covers a tail by being wide enough.
+Both windows are set from a quantile of the measured arrival distribution
+rather than from its maximum, because a maximum is the least stable order
+statistic available and it moves 52 days across five seeds while the
+centiles move 4 and 6. The window carries the body of the distribution with
+its coverage stated and `alert_late_credit_arrival` carries the tail.
+`docs/lookback-window.md` has the argument and `tests/test_recon.py` asserts
+the derivation rather than the number.
 
 ## Billing against the general ledger, by period
 
@@ -379,44 +320,56 @@ version the full build came back with 101 of 101 checks passing, and the six row
 fixture failed on `the_period_shift_nets_to_zero_over_the_corpus`. Twenty
 thousand lines said the model was fine and six said it was not.
 
-## Bytes scanned, and why there is no number here
+## Bytes scanned
 
-The plan for this layer asked for bytes scanned on three finance queries, with
-the clustered table against the unclustered one. **That measurement does not
-exist and nothing in this file estimates it.**
+No figure exists here. The quantity is a BigQuery one and a dry run needs
+credentials this repository has no path to. So the clustered and unclustered
+pair is a design with a harness behind it and no result.
+`scripts/scan_probe.py` names the two identifiers it waits on and exits 2
+rather than writing a figure. `docs/bytes-scanned.md` has the rest.
 
-BigQuery reports the bytes a query would scan through a dry run, which costs
-nothing and needs a billing enabled project. This repository has no credential
-path to one. `scripts/scan_probe.py` is the measurement, it names every blocker
-and it exits 2 rather than printing anything.
+## The daily run, and the periods it reopens
 
-A DuckDB row count is not a substitute. Neither is a file size. They are
-different quantities on a different engine and publishing one under the name of
-the other is the only way this repository could lie.
+`recon_reopen_days` was a number in `dbt_project.yml` and
+`recon_billing_to_gl` published `inside_the_reopen_window` on every row.
+Nothing read either one. The window was a word in this file and a column in
+a table, and a reader who took it literally would have expected a process
+that reopens periods. This is that process. It arrives with the scheduler
+rather than before it, because a reprocessing job with nothing to run it is
+the same overstatement one layer down.
 
-What is measurable today is narrower and it is real. `dbt parse` never
-opens a connection, so the BigQuery branch of the layout macro resolves with no
-credentials. Parsed against the bigquery target, the clustered half comes back
-with monthly partitions on `invoice_date` and clustering on `vendor_id` then
-`partner_id` then `product_line`. Parsed against duckdb, both halves come back
-with neither. The adapter dispatch works. What the layout costs is unknown, and
-`dbt compile --target bigquery` cannot help because it opens a connection and
-fails to authenticate, with and without `--no-introspect`.
+`scripts/reopen_periods.py` reads the reconciliation, asks
+`gross_margin/reopen.py` which periods can still move, recomputes those and
+compares the answer against the rows the full build wrote for them. A period is
+reopened when it is inside the window AND carries a term that is not settled.
+Three terms qualify. An unposted document, a document the ledger will post
+into another period, and an amount keyed wrong. The other two are far halves of
+documents counted elsewhere, so a period holding only those moves when its
+origin period does rather than on its own.
 
-The three queries are executed against DuckDB on every build, once per half of
-the pair. They return 3 and
-41 and 144 rows and the
-two halves agree on all three. That proves the SQL parses and returns something,
-which is not the same as measuring it, and the first version of query one failed
-exactly there. A macro call inside a line comment renders like any other, the
-relation it produced ran to three lines, and two of them escaped the comment.
-Compile exited zero on it.
+On this corpus 6 of 25 periods are inside the window and the term rule excludes
+1 of those 6, so the scoped rerun touches 20 period and account rows against 98
+for a full rebuild. **The window does nearly all of that work and the term rule
+does very little**, which is worth saying plainly, because the rule is the part
+with the argument behind it. What it buys at this size is that the job can say
+which periods it recomputed and why, and the cost of being wrong about it grows
+with the ledger rather than staying at one period.
 
-The key order is an argument rather than a result. Clustering prunes on a prefix,
-and the first query restricts to one vendor while the second groups by partner
-across a month, so vendor first should help query one most and query two least.
-Query three reads the whole history and may gain nothing. The probe is what would
-settle those three predictions.
+The comparison is the reason to run it rather than to trust it. On a corpus with
+no new data the scoped answer and the stored table have to agree cent for cent
+across all seven compared columns, and they do, on 20 of 20 rows. A reprocessing
+path that quietly answers differently from a full rebuild is how a close ends up
+depending on which route ran last.
+
+`orchestration/dags/gross_margin_daily.py` wires the five steps. It holds no
+step list of its own. The graph is built by looping over
+`gross_margin/pipeline.py`, which is also what
+`tests/test_orchestration.py` reads, so a task added by hand beside the loop
+fails the suite. The DAG was parsed with Airflow 2.11.2 under Python 3.11 and
+`measurements/dag-parse.json` records the task ids, the dependencies and the
+topological order it resolved. **A parse is not a run.** No scheduler has ever
+been handed this file, and the measurement carries that as a field rather than
+as a sentence so a check can assert it.
 
 ## Who can read what
 
@@ -466,6 +419,19 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
 - There is no bytes scanned figure, so the clustered and unclustered pair is a
   design with a test harness behind it and no result. `scripts/scan_probe.py`
   names what it waits on.
+- There is no bytes per report session figure. Measuring one needs a Power BI
+  workspace, a licence and a published semantic model. This repository has
+  none of the three. An import model against DirectQuery is a comparison of
+  two things that both have to exist, so unlike the Terraform there is no
+  partial version to ship and no number here at all.
+- Cloud Composer is declared in `infra/composer.tf` and has never been applied,
+  like the rest of `infra/`. It is also the most expensive resource in the
+  repository, because a Composer environment bills while it is idle, and what a
+  daily run costs is therefore not measured anywhere and cannot be until an
+  environment exists.
+- The reopen job recomputes and does not write back. A real deployment would
+  materialise the scoped answer over the reopened partitions, and partition
+  replacement on DuckDB is a different mechanism from the one BigQuery uses.
 - DuckDB has neither partitioning nor clustering, so the two halves of the scan
   pair are identical tables there. The check that they hold the same rows is
   real. The layout difference is not, anywhere this has run.
