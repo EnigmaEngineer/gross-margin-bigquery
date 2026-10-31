@@ -1,0 +1,70 @@
+{
+  "declared_window_days": 150,
+  "periods_in_the_window": 6,
+  "periods_inside_the_window_left_closed": 1,
+  "periods_outside_the_window": 19,
+  "periods_reopened": 5,
+  "periods_total": 25,
+  "rebuilt_by": "python3 scripts/reopen_periods.py",
+  "recomputation": {
+    "columns_compared": [
+      "billing_cents",
+      "ledger_cents",
+      "billing_documents",
+      "ledger_entries",
+      "variance_cents",
+      "period_shift_cents",
+      "break_cents"
+    ],
+    "rows_recomputed": 20,
+    "rows_stored_for_the_same_periods": 20,
+    "rows_that_disagree": 0
+  },
+  "reopened": [
+    {
+      "accounts": 4,
+      "period": "2026-02",
+      "reasons": [
+        "awaiting_the_ledger_cents"
+      ],
+      "unsettled_cents": 363534561
+    },
+    {
+      "accounts": 4,
+      "period": "2026-03",
+      "reasons": [
+        "awaiting_the_ledger_cents"
+      ],
+      "unsettled_cents": 512865994
+    },
+    {
+      "accounts": 4,
+      "period": "2026-04",
+      "reasons": [
+        "unposted_cents",
+        "awaiting_the_ledger_cents"
+      ],
+      "unsettled_cents": 328944701
+    },
+    {
+      "accounts": 4,
+      "period": "2026-05",
+      "reasons": [
+        "awaiting_the_ledger_cents",
+        "amount_difference_cents"
+      ],
+      "unsettled_cents": 242533906
+    },
+    {
+      "accounts": 4,
+      "period": "2026-06",
+      "reasons": [
+        "unposted_cents",
+        "awaiting_the_ledger_cents"
+      ],
+      "unsettled_cents": 523322995
+    }
+  ],
+  "rows_a_full_rebuild_would_touch": 98,
+  "scope_predicate_when_the_plan_is_empty": "1 = 0"
+}
