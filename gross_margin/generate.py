@@ -201,8 +201,26 @@ def _plans(seed: int, partners: list[dict]) -> list[dict]:
 
 
 def _invoices_and_lines(
-    seed: int, partners: list[dict], products: list[dict]
+    seed: int, partners: list[dict], products: list[dict], volume_scale: int = 1
 ) -> tuple[list[dict], list[dict]]:
+    """Invoices and their lines over the generated window.
+
+    `volume_scale` multiplies the invoices raised per day and exists for one
+    reason, which is that nothing else in this module scales the corpus. The
+    vendor and partner and product counts are populations drawn from, so raising
+    them widens the variety and leaves the row count where it was. A profile of
+    a join at ten times the size was asked for on the assumption that an
+    existing argument would do it, and no argument did.
+
+    It multiplies the daily draw rather than extending the window. A longer
+    window moves the quarter boundaries and the close freezes the lag
+    distribution is built on, so it would change the shape of the corpus as
+    well as its size and the arms would not be comparable. More invoices per
+    day leaves every date effect alone.
+
+    At 1 the draw is a single randint per day exactly as before, so the
+    committed corpus still reproduces byte for byte.
+    """
     head_rng = _rng(seed, "invoices")
     line_rng = _rng(seed, "lines")
     invoices: list[dict] = []
@@ -214,6 +232,13 @@ def _invoices_and_lines(
         # effect in here and it is deliberate. It gives the rebate anchor something
         # to bite on.
         base = head_rng.randint(*INVOICES_PER_DAY)
+        if volume_scale > 1:
+            # Drawn per copy rather than multiplied, so the spread of daily
+            # volume survives the scaling instead of becoming one draw times a
+            # constant.
+            base += sum(
+                head_rng.randint(*INVOICES_PER_DAY) for _ in range(volume_scale - 1)
+            )
         if (quarter_end(day) - day).days <= 7:
             base = int(base * 1.6)
         for _ in range(base):
@@ -305,15 +330,21 @@ def build(
     vendors: int = 14,
     partners: int = 40,
     products: int = 120,
+    volume_scale: int = 1,
 ) -> Corpus:
-    """The clean corpus. No discrepancies, no defects, nothing injected."""
+    """The clean corpus. No discrepancies, no defects, nothing injected.
+
+    `volume_scale` is the only argument that changes how many rows come out.
+    The other three are population sizes to draw from. See
+    `_invoices_and_lines`.
+    """
     corpus = Corpus(seed=seed)
     corpus.vendors = _vendors(seed, vendors)
     corpus.partners = _partners(seed, partners)
     corpus.products = _products(seed, products, corpus.vendors)
     corpus.plans = _plans(seed, corpus.partners)
     corpus.invoices, corpus.lines = _invoices_and_lines(
-        seed, corpus.partners, corpus.products
+        seed, corpus.partners, corpus.products, volume_scale
     )
     corpus.credits, corpus.censored_credits = _credits(
         seed, corpus.invoices, corpus.lines

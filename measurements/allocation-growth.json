@@ -1,0 +1,48 @@
+{
+  "arms": [
+    {
+      "aggregated_join_pairs": 932,
+      "allocation_rows": 192572,
+      "allocation_rows_per_credit": 53.63,
+      "credits": 3591,
+      "lines": 20446,
+      "pairs_per_rebate": 203.75,
+      "placeable_volume_rebates": 932,
+      "scale": 1,
+      "scoped_join_pairs": 189899,
+      "vendor_quarter_groups": 112,
+      "widest_vendor_quarter_lines": 338
+    },
+    {
+      "aggregated_join_pairs": 8964,
+      "allocation_rows": 18266702,
+      "allocation_rows_per_credit": 526.74,
+      "credits": 34679,
+      "lines": 205713,
+      "pairs_per_rebate": 2034.91,
+      "placeable_volume_rebates": 8964,
+      "scale": 10,
+      "scoped_join_pairs": 18240971,
+      "vendor_quarter_groups": 112,
+      "widest_vendor_quarter_lines": 3094
+    }
+  ],
+  "base_corpus_shape": {
+    "partners": 40,
+    "products": 120,
+    "vendors": 14
+  },
+  "growth": {
+    "aggregated_join_pair_factor": 9.62,
+    "allocation_row_factor": 94.86,
+    "corpus_scale_factor": 10.0,
+    "credit_factor": 9.66,
+    "line_factor": 10.06,
+    "pairs_grow_faster_than_lines": true,
+    "scoped_join_pair_factor": 96.06,
+    "widest_vendor_quarter_factor": 9.15
+  },
+  "rebuilt_by": "python3 scripts/allocation_profile.py",
+  "seed": 20260428,
+  "what_this_does_not_measure": "no wall time, by the rule that a published figure has to reproduce off this machine. It also builds on DuckDB and not on BigQuery, so it says how the pair count grows and nothing about what the join would cost in slots or bytes scanned"
+}
