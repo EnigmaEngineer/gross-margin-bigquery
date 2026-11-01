@@ -303,13 +303,20 @@ def check_the_probe_refuses_to_run_without_the_access_it_needs():
 
 
 def _readme_flat() -> str:
-    """The README with whitespace collapsed.
+    """Every published page with whitespace collapsed, the README and docs/.
 
-    Same reason as the other README module. The file is hard wrapped, so a
-    sentence carrying a figure is usually split across a newline and a search for
-    it on one line finds nothing.
+    Hard wrapped files, so a sentence carrying a figure usually straddles a
+    newline and a search on one line finds nothing. Both pages rather than the
+    README alone, because a section that moves into docs/ takes its figures with
+    it and the question here is whether a figure a reader sees was derived, not
+    which file it landed in.
     """
-    return " ".join((REPO_ROOT / "README.md").read_text(encoding="utf-8").split())
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    parts += [
+        path.read_text(encoding="utf-8")
+        for path in sorted((REPO_ROOT / "docs").glob("*.md"))
+    ]
+    return " ".join(" ".join(parts).split())
 
 
 def check_the_readme_figures_come_from_the_shape_measurement():

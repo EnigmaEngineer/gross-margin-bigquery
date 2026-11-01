@@ -73,3 +73,34 @@ so changing the variable without re-running the refit fails the suite.
 
 The rest of the tail is the alert's job, and that is the honest division of
 labour. Nothing covers a tail by being wide enough.
+
+## One lookback window does not work, and it fails in both directions
+
+Moved out of the README on the completion pass. The table is graded in place by
+`tests/test_recon.py`, which reads it from this file.
+
+A reconciliation job reopens a window of past days so that a late credit does not
+make a closed period wrong. Sizing that window from the pooled population gives
+105 days at a target of ninety five percent coverage. Measured per credit kind, the
+same target gives three very different answers.
+
+| credit kind | credits | own window, days | coverage under the pooled 105 day window |
+|---|---|---|---|
+| price_protection | 1441 | 20 | 100.0 |
+| return_credit | 1213 | 49 | 99.84 |
+| volume_rebate | 934 | 124 | 82.23 |
+
+Read the last column before the third one. A pooled window advertised at ninety
+five percent delivers 82.23 percent on volume rebates, because the pooled centile
+is pulled down by the two faster kinds that together hold most of the rows. The
+window is simultaneously too short for the kind it was supposed to protect.
+
+In the other direction it is far too long for everything else. Holding every credit
+to 105 days when price protection settles in 20 costs 190,413 credit days of
+waiting that nothing needs.
+
+A volume rebate cannot be raised until the quarter it belongs to has closed, so its
+distance from the invoice depends on where in the quarter the invoice sat. That is
+a property of the process and no amount of pooling will make it look like a price
+protection claim. The window gets keyed by credit kind.
+

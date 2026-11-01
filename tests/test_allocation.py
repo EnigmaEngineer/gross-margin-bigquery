@@ -250,7 +250,20 @@ def check_the_adapter_split_stays_in_the_macro():
 
 
 def _readme_flat() -> str:
-    return " ".join((REPO_ROOT / "README.md").read_text(encoding="utf-8").split())
+    """Every published page with whitespace collapsed, the README and docs/.
+
+    Hard wrapped files, so a sentence carrying a figure usually straddles a
+    newline and a search on one line finds nothing. Both pages rather than the
+    README alone, because a section that moves into docs/ takes its figures with
+    it and the question here is whether a figure a reader sees was derived, not
+    which file it landed in.
+    """
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    parts += [
+        path.read_text(encoding="utf-8")
+        for path in sorted((REPO_ROOT / "docs").glob("*.md"))
+    ]
+    return " ".join(" ".join(parts).split())
 
 
 def _published_prose_raw() -> str:

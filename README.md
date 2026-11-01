@@ -83,30 +83,12 @@ close batch rather than the clock.
 
 ## One lookback window does not work, and it fails in both directions
 
-A reconciliation job reopens a window of past days so that a late credit does not
-make a closed period wrong. Sizing that window from the pooled population gives
-105 days at a target of ninety five percent coverage. Measured per credit kind, the
-same target gives three very different answers.
+A pooled window advertised at ninety five percent coverage delivers 82.23 percent
+on volume rebates, because the pooled centile is pulled down by the two faster
+kinds that hold most of the rows. It is simultaneously far too long for those two.
+So the window is keyed by credit kind. `docs/lookback-window.md` carries the
+per kind table and the argument.
 
-| credit kind | credits | own window, days | coverage under the pooled 105 day window |
-|---|---|---|---|
-| price_protection | 1441 | 20 | 100.0 |
-| return_credit | 1213 | 49 | 99.84 |
-| volume_rebate | 934 | 124 | 82.23 |
-
-Read the last column before the third one. A pooled window advertised at ninety
-five percent delivers 82.23 percent on volume rebates, because the pooled centile
-is pulled down by the two faster kinds that together hold most of the rows. The
-window is simultaneously too short for the kind it was supposed to protect.
-
-In the other direction it is far too long for everything else. Holding every credit
-to 105 days when price protection settles in 20 costs 190,413 credit days of
-waiting that nothing needs.
-
-A volume rebate cannot be raised until the quarter it belongs to has closed, so its
-distance from the invoice depends on where in the quarter the invoice sat. That is
-a property of the process and no amount of pooling will make it look like a price
-protection claim. The window gets keyed by credit kind.
 
 ## Injected discrepancies
 
@@ -223,6 +205,25 @@ invoice and the named reading cannot place at all. Neither total is the true
 margin. The three credits nobody can place are in neither, and they are worth
 $27,518.56.
 
+### The spread is quadratic
+
+932 rebates become 189,899 allocation rows and the table rebuilds inside the
+normal `dbt build` with no cost worth noticing. That is the problem rather than
+the reassurance, because the spread is a self join on the line table keyed by
+vendor and quarter and 20,446 lines is small enough to hide a square.
+
+| | lines | allocation rows | scoped join pairs |
+|---|---|---|---|
+| shipped | 20,446 | 192,572 | 189,899 |
+| ten times | 205,713 | 18,266,702 | 18,240,971 |
+| factor | 10.06 | 94.86 | 96.06 |
+
+Ten times the lines is ninety six times the pairs. Grouping the lines to vendor
+and quarter before the credit meets them is linear at 9.62, and that rewrite is
+the fix and is not in this repository. `docs/allocation-fan-out.md` has the
+argument, what the rewrite would and would not change, and the generator
+assumption that had to be corrected to measure any of it.
+
 ## The lookback window
 
 Both windows are set from a quantile of the measured arrival distribution
@@ -256,10 +257,34 @@ whole cents.
 
 Over this corpus the gross variance across 98 period and account rows is
 $36,686,739.57. Of that, $36,551,436.86 is period shift and $630,907.71 is a
-break, so 99.63 percent of the gross variance resolves with nobody touching it.
-58 rows carry a variance and 16 carry a break. The signed period shift is
-$0.00 exactly, because moving a document between two periods cannot create money,
-and a dbt test asserts that rather than trusting it.
+break, so 98.3 percent of the two gross terms is the shift and that much resolves
+with nobody touching it. 58 rows carry a variance and 16 carry a break. The signed
+period shift is $0.00 exactly, because moving a document between two periods
+cannot create money, and a dbt test asserts that rather than trusting it.
+
+That share replaced a wrong one on the completion pass. The figure published for
+five days was the gross period shift over the gross variance, which is 99.63
+percent and is not a share of anything, because `variance = period_shift + break`
+holds per row with the terms free to disagree in sign. On this corpus 5 rows of
+98 carry a shift larger than their own variance, so the ratio of the two absolute
+column totals has no upper bound. It read as a share for as long as it happened
+to stay under a hundred.
+
+A loop found it rather than a review. The share is dominated by invoices billed
+inside the close freeze and the width of that freeze is `FREEZE_BUSINESS_DAYS`,
+which is 2 because the module author chose 2.
+
+| close freeze, business days | share of the two terms | shift over variance | rows where the shift exceeds the variance |
+|---|---|---|---|
+| 1 | 97.34 | 99.12 | 4 |
+| 2 | 98.3 | 99.63 | 5 |
+| 3 | 98.82 | 100.77 | 6 |
+
+At a three day close the old formula returns 100.77 percent, and a share above a
+hundred percent is not a number with a rounding problem. Both figures are
+published now, the bounded one as a share and the other named as a ratio.
+`docs/period-shift-share.md` has the argument.
+
 
 The break divides into $204,406.73 billing raised and the ledger never received,
 $155,269.78 posted with no billing document behind it, and -$268,768.80 keyed at
@@ -287,38 +312,14 @@ days, so a different draw of the same business puts more rows here.
 
 ## Proving it on numbers a person can check
 
-Twenty thousand lines cannot be verified by reading them. `scripts/allocation_fixture.py`
-builds a six line corpus with the same seven files and the same headers, runs the
-real models over it, and compares against figures worked out on paper and written
-into the script as literals. It covers all four scopes. There is a rounding tie
-that one leftover cent cannot settle evenly and a scope whose basis sums to zero.
-One credit has its invoice in one month and its posting in the next.
+Twenty thousand lines cannot be verified by reading them, so two six row corpora
+carry every expected figure worked out on paper. `scripts/allocation_fixture.py`
+covers all four allocation scopes, a rounding tie and a month boundary, then runs
+the incremental three times to prove the anchor rather than the window.
+`scripts/recon_fixture.py` does the same for the reconciliation and it exists
+because of a defect it caught, where the full build passed 101 of 101 checks and
+the six row fixture failed. `docs/hand-checked-fixtures.md` has both in full.
 
-Then it runs the incremental three times. The second run appends a credit posted
-578 days after the invoice it adjusts and asserts that it lands, and the run
-refuses to proceed unless that credit's invoice is outside a window of the same
-length, so the run is a test of the anchor rather than of the window. The third
-appends a credit backdated past the window and asserts it is missed, because a
-window that cannot miss anything is not a window.
-
-### The reconciliation on numbers a person can check
-
-`scripts/recon_fixture.py` is the same idea for the reconciliation. Three
-invoices, two credits and eight ledger entries. The expected variance, period
-shift and break for every period and account were worked out on paper and
-written into the script as literals.
-
-It exists because of a defect it caught. The first version of the model moved the
-billing amount between periods when the two systems disagreed about which period a
-document belonged to. A document that is both in the wrong period and at the
-wrong amount then had its amount difference counted as a period shift, which says
-it will clear next month, and it will not. The variance still added up, so the
-decomposition test passed either way.
-
-No row in the generated corpus carries both defects at once. Under the first
-version the full build came back with 101 of 101 checks passing, and the six row
-fixture failed on `the_period_shift_nets_to_zero_over_the_corpus`. Twenty
-thousand lines said the model was fine and six said it was not.
 
 ## Bytes scanned
 
@@ -391,6 +392,56 @@ carry no region and no regional predicate matches them. 93 lines holding
 2,024,816.82 of revenue are reachable by no regional role, and the four regional
 reports therefore do not add up to the finance total.
 
+### The grant was not implementing the refusal
+
+`grants_for` refuses a regional role every mart with no region column. On DuckDB
+that refusal is real because the role has no view. On BigQuery it was supposed to
+come from the row access policy union, and the flaw is in the half of that rule
+nobody read back. A table carrying no policy at all is filtered by nothing, and
+`access.tf` holds one dataset grant that every role is on.
+
+So the finance wide marts, which carried no policy because the rule list only
+created them for tables with a region column, were readable in full by every
+regional role.
+
+| | regional role reads whole | narrowed by a policy | refused |
+|---|---|---|---|
+| before | 9 | 2 | 2 |
+| after | 5 | 2 | 6 |
+
+Every relation in the rule list now carries a policy and the union does the
+refusing, which took the policy count from 14 to 22. Five marts are still open to
+a regional role and they are the ones the access model never classified. They are
+written down in `MARTS_OUTSIDE_THE_RULE_LIST` with a reason each and a check
+refuses a mart in neither list, because absence from the rule list is a grant
+rather than a default. `docs/access-model.md` has the rest.
+
+## What a daily run costs
+
+A list price multiplied out and not a measurement, and the difference is the
+point. Nothing in `infra/` has been applied, so no bill exists.
+`scripts/cost_model.py` reads the shape out of `infra/composer.tf`, reads the
+rates out of `infra/price-list.json`, and multiplies.
+
+The declared environment is the smallest Composer 2 shape that runs, 1.5 vCPU and
+6 GiB across a scheduler, a web server and one worker. That comes to **10.75** a
+day, $322.63 over 30 days, and the environment fee alone is 78.11 percent of it.
+
+Every term in that total bills for existing rather than for work. So the number
+does not move when the pipeline fires more often and it does not fall to zero on
+a day it does not fire at all.
+
+The term that would tell you what a run costs is missing. BigQuery on demand is
+$6.25 per TiB with the first TiB free, and the quantity it multiplies has never
+been measured, because a byte count needs a dry run and a dry run needs a billing
+enabled project. The landing corpus is 2,957,980 bytes, which bounds storage
+below the free tier without being the storage term.
+
+That is an uncomfortable shape to publish and it is the honest one. The half that
+bills for having a scheduler is priced. The half that does the work is not.
+`docs/cost-and-teardown.md` carries the terms, the teardown procedure, and why
+the documented one command destroy does not work.
+
 ## Infrastructure, written and not applied
 
 `infra/` holds a landing bucket, three BigQuery datasets, a build identity and a
@@ -425,10 +476,10 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
   two things that both have to exist, so unlike the Terraform there is no
   partial version to ship and no number here at all.
 - Cloud Composer is declared in `infra/composer.tf` and has never been applied,
-  like the rest of `infra/`. It is also the most expensive resource in the
-  repository, because a Composer environment bills while it is idle, and what a
-  daily run costs is therefore not measured anywhere and cannot be until an
-  environment exists.
+  like the rest of `infra/`. The daily figure in this file is a published price
+  list multiplied out against a declared shape, so it is what the environment
+  would be charged for existing and not what a run costs. The term that would
+  answer that question is bytes scanned and it has no quantity.
 - The reopen job recomputes and does not write back. A real deployment would
   materialise the scoped answer over the reopened partitions, and partition
   replacement on DuckDB is a different mechanism from the one BigQuery uses.
@@ -484,9 +535,10 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
 - `stg_gl_entries` flags an entry whose own period label disagrees with its
   posted date. No entry in this corpus does, because the generator writes the
   two together, so that flag is reasoned about and never true.
-- The reconciliation reopens nothing. `inside_the_reopen_window` is a label on a
-  row and no process in this repository acts on it, so the window is a declared
-  depth rather than a scheduled behaviour.
+- The reopen job compares the scoped recomputation against the stored table on a
+  corpus that did not change between them, so what it proves is that the two code
+  paths agree. It does not prove the job would notice new data, because no second
+  load has ever arrived.
 - The alert holds one row. One row is the right size for this corpus and it is
   not evidence that the threshold is well chosen. The seed refit says the arrival
   tail reaches at least 216 days, so another draw of the same business puts more
@@ -497,6 +549,38 @@ trusts every repository on GitHub. A budget with no threshold above the budget.
 - `fct_gl_posting` is a full outer join over 17,419 ledger entries and 17,415
   billing document rows, and nothing in the repo profiles it. At this size it
   does not matter. On a real ledger the join key and its selectivity are the
-  thing to watch.
-- This file is long. Two of its sections are analysis that belongs in a `docs/`
-  page, and moving them also moves tables a check grades in place.
+  thing to watch. The allocation self join beside it now has a growth figure and
+  this one does not.
+- Five marts are readable whole by a regional role on BigQuery, and they are the
+  ones `gross_margin/access.py` never classified. They are written down in
+  `MARTS_OUTSIDE_THE_RULE_LIST` with a reason each and a check refuses a mart in
+  neither list. Three of them carry credit or ledger amounts at document grain,
+  which is the same sensitivity recorded against `credit_rollup_by_line`, and
+  that relation is refused. The consistent answer is probably to refuse these
+  too. It changes what partner operations can report on as well, so it is a
+  product decision rather than a correction.
+- The reason recorded for withholding margin rather than revenue is weaker after
+  today, not stronger. The argument was that revenue is obtainable by another
+  route while margin exists nowhere outside these marts. The reachability read
+  says that inside this warehouse a regional role now reaches revenue only for
+  its own region, because the finance wide marts are refused and no role is
+  granted staging or raw. So the other route is the billing system or the
+  invoices the reader already holds, which is a claim about systems this
+  repository cannot see and cannot check.
+- The row access policy union is the mechanism the whole BigQuery side rests on
+  and it has never been observed. Six of the 22 generated policies are explicit
+  true predicates and they exist because a principal with no policy on a table
+  that carries policies is believed to read zero rows. That is read off
+  documentation and the provider schema. If it is wrong, those six are noise and
+  the refusals built on absence do not refuse.
+- The teardown procedure in `docs/cost-and-teardown.md` has never run.
+  `terraform validate` grades a configuration and says nothing about whether a
+  destroy succeeds, and the Composer environment carries `prevent_destroy`, so
+  the documented single command stops on the most expensive resource.
+- The freeze width sweep moves one constant and holds the seed. The share lands
+  between 97.34 and 98.82 over three widths at one seed, so that range is the
+  sensitivity to the close calendar and not a confidence interval.
+- This file is long. It came down from 502 lines to roughly 460 on the completion
+  pass by moving two analysis sections into `docs/`, and the standing target is
+  about 200. Every remaining section carries a figure or a decision, which is how
+  a front page grows back one defensible addition at a time.

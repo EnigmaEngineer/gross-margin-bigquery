@@ -18,22 +18,39 @@ from gross_margin import manifest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 README = REPO_ROOT / "README.md"
+DOCS = REPO_ROOT / "docs"
 LAG_FILE = REPO_ROOT / "measurements" / "credit-lag.json"
 
 
+def _published_pages() -> list[Path]:
+    """Every page a reader of this repository sees, not only the front one.
+
+    The README and `docs/` together. This started as the README alone and broke
+    twice, on two separate days, when a section carrying figures moved into
+    `docs/` and these checks reported the figures as missing. The fix that writes
+    itself at that moment is to delete the check, and it is the wrong one. The
+    question each check asks is whether a figure a reader sees was derived rather
+    than typed, and which published file carries it is not part of that question.
+
+    So a check anchored to one filename is a check that argues against ever
+    reorganising the prose, and this function is what stops that argument.
+    """
+    return [README, *sorted(DOCS.glob("*.md"))]
+
+
 def _text() -> str:
-    return README.read_text(encoding="utf-8")
+    return "\n".join(path.read_text(encoding="utf-8") for path in _published_pages())
 
 
 def _flat() -> str:
-    """The README with every run of whitespace collapsed to one space.
+    """The published pages with every run of whitespace collapsed to one space.
 
-    This file is hard wrapped, so a sentence carrying a figure is usually split
-    across a newline and a search for it on one line finds nothing. The first
-    version of this module searched the raw text and reported a figure as missing
-    that was sitting there in two pieces.
+    These files are hard wrapped, so a sentence carrying a figure is usually
+    split across a newline and a search for it on one line finds nothing. The
+    first version of this module searched the raw text and reported a figure as
+    missing that was sitting there in two pieces.
     """
-    return " ".join(README.read_text(encoding="utf-8").split())
+    return " ".join(_text().split())
 
 
 def _published() -> dict:
