@@ -1,0 +1,109 @@
+{
+  "arms": [
+    {
+      "break_cents": 63090771,
+      "dbt_build": {
+        "error": 0,
+        "no-op": 0,
+        "pass": 101,
+        "reused": 0,
+        "skip": 0,
+        "total": 101,
+        "warn": 0
+      },
+      "documents_posting_outside_their_billing_period": 702,
+      "freeze_business_days": 1,
+      "gross_variance_cents": 2330174889,
+      "period_and_account_rows": 98,
+      "period_shift_cents": 2309653172,
+      "ratio_of_gross_period_shift_to_gross_variance_pct": 99.12,
+      "rows_where_the_period_shift_exceeds_the_variance": 4,
+      "rows_with_a_break": 16,
+      "share_of_the_gross_absolute_terms_that_is_a_period_shift_pct": 97.34,
+      "signed_period_shift_cents": 0,
+      "signed_variance_cents": -21963185
+    },
+    {
+      "break_cents": 63090771,
+      "dbt_build": {
+        "error": 0,
+        "no-op": 0,
+        "pass": 101,
+        "reused": 0,
+        "skip": 0,
+        "total": 101,
+        "warn": 0
+      },
+      "documents_posting_outside_their_billing_period": 1500,
+      "freeze_business_days": 2,
+      "gross_variance_cents": 3668673957,
+      "period_and_account_rows": 98,
+      "period_shift_cents": 3655143686,
+      "ratio_of_gross_period_shift_to_gross_variance_pct": 99.63,
+      "rows_where_the_period_shift_exceeds_the_variance": 5,
+      "rows_with_a_break": 16,
+      "share_of_the_gross_absolute_terms_that_is_a_period_shift_pct": 98.3,
+      "signed_period_shift_cents": 0,
+      "signed_variance_cents": -21963185
+    },
+    {
+      "break_cents": 63090771,
+      "dbt_build": {
+        "error": 0,
+        "no-op": 0,
+        "pass": 101,
+        "reused": 0,
+        "skip": 0,
+        "total": 101,
+        "warn": 0
+      },
+      "documents_posting_outside_their_billing_period": 2257,
+      "freeze_business_days": 3,
+      "gross_variance_cents": 5230055643,
+      "period_and_account_rows": 98,
+      "period_shift_cents": 5270525372,
+      "ratio_of_gross_period_shift_to_gross_variance_pct": 100.77,
+      "rows_where_the_period_shift_exceeds_the_variance": 6,
+      "rows_with_a_break": 16,
+      "share_of_the_gross_absolute_terms_that_is_a_period_shift_pct": 98.82,
+      "signed_period_shift_cents": 0,
+      "signed_variance_cents": -21963185
+    }
+  ],
+  "control": {
+    "agrees": true,
+    "published_share_pct": 98.3,
+    "share_pct_at_the_shipped_width": 98.3
+  },
+  "ratio_pct_by_width": {
+    "1": 99.12,
+    "2": 99.63,
+    "3": 100.77
+  },
+  "ratio_pct_range": {
+    "max": 100.77,
+    "min": 99.12,
+    "spread": 1.65
+  },
+  "rebuilt_by": "python3 scripts/freeze_sweep.py",
+  "seed": 20260428,
+  "share_pct_by_width": {
+    "1": 97.34,
+    "2": 98.3,
+    "3": 98.82
+  },
+  "share_pct_range": {
+    "max": 98.82,
+    "min": 97.34,
+    "spread": 1.48
+  },
+  "shipped_freeze_business_days": 2,
+  "widths": [
+    1,
+    2,
+    3
+  ],
+  "widths_where_the_ratio_exceeds_one_hundred": [
+    3
+  ]
+}

@@ -154,13 +154,58 @@ def check_the_published_totals_re_derive_from_the_rows():
 
 
 def check_the_headline_share_re_derives():
-    """The one figure in the README a reader is most likely to quote back."""
+    """The one figure in the README a reader is most likely to quote back.
+
+    It re-derives against the sum of the two gross terms and not against the
+    gross variance. Those give different answers and the difference is the
+    reason this check changed. See the check below.
+    """
+    recon = _recon()
+    absolute = recon["absolute_cents"]
+    want = round(
+        100.0 * absolute["period_shift"] / (absolute["period_shift"] + absolute["break"]),
+        2,
+    )
+    got = recon["share_of_the_gross_absolute_terms_that_is_a_period_shift_pct"]
+    if got != want:
+        raise AssertionError(f"the share is published as {got} and re-derives as {want}")
+
+
+def check_the_unbounded_ratio_is_published_as_a_ratio_and_re_derives():
+    """The figure that was called a share for five days and is not one.
+
+    `variance = period_shift + break` per row, the terms are free to disagree in
+    sign, so a row's period shift can be larger than its own variance. Summing
+    absolute values down each column and dividing therefore has no upper bound.
+    It stayed under a hundred on this corpus and the freeze width sweep took it
+    to 100.77 at a three day close.
+
+    So it keeps a name that says it is a ratio, and this check asserts the row
+    count that makes it one is actually there. A corpus where no row has the two
+    terms opposed would make the ratio and the share agree, and a later reader
+    is entitled to know which case they are looking at.
+    """
     recon = _recon()
     absolute = recon["absolute_cents"]
     want = round(100.0 * absolute["period_shift"] / absolute["variance"], 2)
-    got = recon["share_of_the_gross_variance_that_is_a_period_shift_pct"]
+    got = recon["ratio_of_gross_period_shift_to_gross_variance_pct"]
     if got != want:
-        raise AssertionError(f"the share is published as {got} and re-derives as {want}")
+        raise AssertionError(f"the ratio is published as {got} and re-derives as {want}")
+
+    rows = recon["by_period"]
+    exceeding = sum(
+        1 for row in rows if abs(row["period_shift_cents"]) > abs(row["variance_cents"])
+    )
+    if recon["rows_where_the_period_shift_exceeds_the_variance"] != exceeding:
+        raise AssertionError(
+            f"the file says {recon['rows_where_the_period_shift_exceeds_the_variance']} rows "
+            f"carry a shift larger than their variance and the rows give {exceeding}"
+        )
+    if exceeding == 0 and got != recon["share_of_the_gross_absolute_terms_that_is_a_period_shift_pct"]:
+        raise AssertionError(
+            "no row carries a shift larger than its variance, so the ratio and the "
+            "share should be reporting the same decomposition and they are not"
+        )
 
 
 def check_the_break_terms_add_up_to_the_break():
@@ -268,10 +313,20 @@ def _published_prose_flat() -> str:
 
 
 def _readme_flat() -> str:
-    """The README with whitespace collapsed, for the reason the other two README
-    modules give. The file is hard wrapped and a figure usually straddles a
-    newline."""
-    return " ".join((REPO_ROOT / "README.md").read_text(encoding="utf-8").split())
+    """Every published page with whitespace collapsed, the README and docs/.
+
+    Hard wrapped files, so a sentence carrying a figure usually straddles a
+    newline and a search on one line finds nothing. Both pages rather than the
+    README alone, because a section that moves into docs/ takes its figures with
+    it and the question here is whether a figure a reader sees was derived, not
+    which file it landed in.
+    """
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    parts += [
+        path.read_text(encoding="utf-8")
+        for path in sorted((REPO_ROOT / "docs").glob("*.md"))
+    ]
+    return " ".join(" ".join(parts).split())
 
 
 def check_the_readme_reconciliation_figures_come_from_the_measurement():
@@ -291,8 +346,12 @@ def check_the_readme_reconciliation_figures_come_from_the_measurement():
         "period shift": f"${money(absolute['period_shift'])} is period shift",
         "break": f"${money(absolute['break'])} is a break",
         "the share": (
-            f"{recon['share_of_the_gross_variance_that_is_a_period_shift_pct']} percent "
-            "of the gross variance resolves"
+            f"{recon['share_of_the_gross_absolute_terms_that_is_a_period_shift_pct']} percent "
+            "of the two gross terms"
+        ),
+        "the ratio": (
+            f"{recon['ratio_of_gross_period_shift_to_gross_variance_pct']} percent of the "
+            "gross variance"
         ),
         "rows with a variance": (
             f"{recon['rows_with_a_variance']} rows carry a variance and "

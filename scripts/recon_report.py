@@ -80,6 +80,20 @@ def report(db_path: Path) -> dict:
             "select count(*) from main_marts.fct_gl_posting "
             "where gl_period_label is not null and gl_period_label <> gl_period"
         ).fetchone()[0]
+
+        # How often the two terms pull against each other inside one row. This
+        # is the mechanism that stops the ratio below from being a share, so it
+        # belongs beside it rather than in a comment.
+        opposed = con.execute(
+            "select "
+            "sum(case when period_shift_cents <> 0 and break_cents <> 0 "
+            "  and sign(period_shift_cents) <> sign(break_cents) then 1 else 0 end), "
+            "sum(case when abs(period_shift_cents) > abs(variance_cents) "
+            "  then 1 else 0 end) "
+            "from main_marts.recon_billing_to_gl"
+        ).fetchone()
+        rows_opposed = int(opposed[0] or 0)
+        rows_shift_exceeds = int(opposed[1] or 0)
     finally:
         con.close()
 
@@ -98,14 +112,32 @@ def report(db_path: Path) -> dict:
             "period_shift": int(totals[4]),
             "break": int(totals[5]),
         },
-        # The share a reader should take away, derived here rather than typed
-        # into the README. It is the fraction of the gross period variance that
-        # resolves without anybody touching it.
-        "share_of_the_gross_variance_that_is_a_period_shift_pct": round(
+        # Two figures where there used to be one, and the reason is that the
+        # old one was not a share.
+        #
+        # `variance = period_shift + break` holds on every row, and the two
+        # terms can have opposite signs, so a row's variance can be smaller
+        # than its period shift. Summing absolute values down each column
+        # separately and dividing therefore gives a ratio with no upper bound.
+        # It read as a share for as long as it stayed under a hundred. The
+        # freeze width sweep took it to 100.77 at a three day close, which is
+        # what made the naming wrong rather than merely loose.
+        #
+        # So the bounded figure is the decomposition share, each term against
+        # the sum of both, and the unbounded one is kept under a name that says
+        # what it is. The row count is what makes the gap legible.
+        "share_of_the_gross_absolute_terms_that_is_a_period_shift_pct": round(
+            100.0 * int(totals[4]) / (int(totals[4]) + int(totals[5])), 2
+        )
+        if (int(totals[4]) + int(totals[5]))
+        else None,
+        "ratio_of_gross_period_shift_to_gross_variance_pct": round(
             100.0 * int(totals[4]) / gross, 2
         )
         if gross
         else None,
+        "rows_where_the_two_terms_have_opposite_signs": rows_opposed,
+        "rows_where_the_period_shift_exceeds_the_variance": rows_shift_exceeds,
         "break_terms_cents": {
             "unposted": int(terms[0]),
             "ledger_only": int(terms[1]),
@@ -180,8 +212,14 @@ def main(argv: list[str] | None = None) -> int:
         f"{usd(absolute['break'])} is a break"
     )
     print(
-        f"{result['share_of_the_gross_variance_that_is_a_period_shift_pct']} percent "
-        "of the gross variance resolves with nobody touching it"
+        f"{result['share_of_the_gross_absolute_terms_that_is_a_period_shift_pct']} percent "
+        "of the two gross terms is the shift, so that much resolves untouched"
+    )
+    print(
+        f"the shift is {result['ratio_of_gross_period_shift_to_gross_variance_pct']} percent "
+        "of the gross variance, which is a ratio and not a share. "
+        f"{result['rows_where_the_period_shift_exceeds_the_variance']} rows of "
+        f"{result['periods_and_accounts']} carry a shift larger than their own variance"
     )
     signed = result["signed_cents"]
     print(
