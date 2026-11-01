@@ -21,7 +21,7 @@ import json
 import re
 from pathlib import Path
 
-from gross_margin import access
+from gross_margin import access, manifest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = REPO_ROOT / "measurements" / "access-enforcement.json"
@@ -30,6 +30,22 @@ MODELS_YML = REPO_ROOT / "transform" / "models" / "marts" / "_models.yml"
 ACCESS_TF = REPO_ROOT / "infra" / "access.tf"
 PARTNERS = REPO_ROOT / "data" / "partners.csv"
 DOC = REPO_ROOT / "docs" / "access-model.md"
+REACH_FILE = REPO_ROOT / "measurements" / "reach-by-role.json"
+
+
+def _published_prose() -> str:
+    """The README and docs/ joined with line structure kept.
+
+    A table row has an address inside a line, so this one does not collapse
+    whitespace the way the figure searches do. Both pages for the reason
+    tests/test_readme.py gives.
+    """
+    parts = [(REPO_ROOT / "README.md").read_text(encoding="utf-8")]
+    parts += [
+        path.read_text(encoding="utf-8")
+        for path in sorted((REPO_ROOT / "docs").glob("*.md"))
+    ]
+    return "\n".join(parts)
 
 
 def _manifest() -> dict:
@@ -633,3 +649,169 @@ def check_the_survey_looked_at_every_relation_the_rule_list_claims_to_cover():
             f"the rule list restricts {stale} and the survey did not find the quantity "
             "on them, so either they are gone or the restriction is wrong"
         )
+
+
+def check_the_rule_list_has_not_shrunk_away_from_the_relations_the_probe_surveyed():
+    """A gate against a stale manifest, which the real gate cannot survive.
+
+    `check_every_mart_holding_a_restricted_column_is_in_the_rule_list` reads
+    `marts_survey.unprotected`, and the probe writes that from the built
+    warehouse. Revert the rule list without re-running the probe and the
+    manifest still records the dropped relations as covered, so the gate passes
+    on a question nobody asked again.
+
+    This asks the question the other way round, against two files that are both
+    committed. Every relation the survey found carrying the quantity has to be
+    in the rule list as it stands right now, in this process, from the module
+    rather than from the manifest. A rule list that shrank fails here whatever
+    the manifest says.
+
+    What it still cannot catch is a warehouse that grew, because the survey is
+    the only thing that enumerates the schema and this check reads its output.
+    Continuous integration running the probe before the suite is the durable
+    answer and no cycle 3 repo has a workflow yet.
+    """
+    survey = _manifest()["marts_survey"]
+    carrying = {
+        carrier["relation"]
+        for carrier in survey["carriers"]
+        if carrier["restricted_columns_present"] or carrier["holds_a_revenue_and_margin_pair"]
+    }
+    covered = set(access.RELATIONS_BY_NAME)
+    dropped = sorted(carrying - covered)
+    if dropped:
+        raise AssertionError(
+            f"the survey found the quantity on {dropped} and the rule list does not "
+            "cover them any more. Either the rule list shrank or the probe is stale, "
+            "and a stale probe is why this check does not read the manifest's verdict"
+        )
+
+
+def check_every_mart_is_either_in_the_rule_list_or_written_down_as_left_out():
+    """A relation in neither list is a grant nobody made on purpose.
+
+    This is the gate on the finding that a table with no row access policy is
+    filtered by nothing. The rule list used to leave the finance wide relations
+    out and that published them whole to every role. Absence is not neutral, so
+    a new mart has to land in one of the two lists before the suite goes green.
+    """
+    survey = _manifest()["marts_survey"]
+    in_the_schema = set(survey["relations_in_marts_schema_names"])
+    accounted = set(access.RELATIONS_BY_NAME) | set(access.MARTS_OUTSIDE_THE_RULE_LIST)
+    unaccounted = sorted(in_the_schema - accounted)
+    if unaccounted:
+        raise AssertionError(
+            f"{unaccounted} sit in the marts dataset and appear in neither "
+            "gross_margin.access.RELATIONS nor MARTS_OUTSIDE_THE_RULE_LIST, so they "
+            "carry no row access policy and every role holding the dataset reads them"
+        )
+    stale = sorted(set(access.MARTS_OUTSIDE_THE_RULE_LIST) - in_the_schema)
+    if stale:
+        raise AssertionError(
+            f"{stale} are written down as deliberately outside the rule list and the "
+            "warehouse does not hold them, so the reason recorded is about nothing"
+        )
+
+
+def check_a_finance_wide_relation_is_refused_to_a_regional_role_on_bigquery_too():
+    """The divergence that was a gap rather than a design.
+
+    `grants_for` refuses a regional role every relation with no region column.
+    On BigQuery that refusal is the absence of a policy for that principal, and
+    for a long time it was the absence of a policy for anybody, which refuses
+    nothing. This asserts the two enforcements now agree on every relation the
+    rule list knows about.
+    """
+    regional = [role for role in access.ROLES if role.is_regional]
+    finance_wide = [
+        relation
+        for relation in access.RELATIONS
+        if relation.region_column is None and relation.reporting_surface
+    ]
+    if not finance_wide:
+        raise AssertionError(
+            "no finance wide reporting surface in the rule list, so this check "
+            "compared nothing and a pass means nothing"
+        )
+    for relation in finance_wide:
+        for role in regional:
+            predicate = access.bigquery_filter_predicate(relation, role)
+            if predicate is not None:
+                raise AssertionError(
+                    f"{role.name} holds a row access policy on {relation.name} with "
+                    f"predicate {predicate!r}. The view layer refuses it this relation, "
+                    "so a policy here makes the two enforcements disagree"
+                )
+        for role in access.ROLES:
+            if role.is_regional:
+                continue
+            if access.bigquery_filter_predicate(relation, role) != "true":
+                raise AssertionError(
+                    f"{role.name} reads {relation.name} through the view layer and holds "
+                    "no true predicate on it. Under the union rule a principal with no "
+                    "policy on a table that has policies reads zero rows, so this role "
+                    "would get an empty table with nothing failing anywhere"
+                )
+
+
+def check_the_reachability_pair_the_readme_publishes_is_derived_from_the_probe():
+    """The before and after counts, graded against the file that produced them.
+
+    The before row is a counterfactual rather than a record of a past run, which
+    is the only honest way to publish it. It is the same read with the rule list
+    cut back to the relations carrying a region column, so it is derived from the
+    module in this process and a later reader can reproduce it.
+    """
+    reach = manifest.read(REACH_FILE)
+    pair = reach["a_regional_role"]
+    text = _published_prose()
+
+    for label, counts in (
+        ("before", pair["before_every_relation_carried_a_policy"]),
+        ("after", pair["after"]),
+    ):
+        row = (
+            f"| {label} | {counts['read_whole']} | {counts['narrowed']} "
+            f"| {counts['refused']} |"
+        )
+        if row not in text:
+            raise AssertionError(
+                f"the published pages do not carry the {label} row {row!r}, so the "
+                "table is a typed figure rather than a derived one"
+            )
+
+    policies = reach["row_access_policy_count"]
+    sentence = f"from {policies['before']} to {policies['after']}"
+    if sentence not in text:
+        raise AssertionError(
+            f"the published pages do not say the policy count went {sentence}"
+        )
+    if policies["after"] <= policies["before"]:
+        raise AssertionError(
+            f"the rule list went from {policies['before']} policies to "
+            f"{policies['after']}, so the completion pass did not widen the refusal "
+            "and the paragraph describing it is wrong"
+        )
+
+
+def check_a_regional_role_reaches_no_finance_wide_relation_in_the_measurement():
+    """The fix, asserted against the probe rather than against the module.
+
+    `check_a_finance_wide_relation_is_refused_to_a_regional_role_on_bigquery_too`
+    asks the module. This asks the file the module wrote while reading the
+    committed Terraform and the built catalogue, so a rule list that stopped
+    matching the module fails here.
+    """
+    reach = manifest.read(REACH_FILE)
+    outside = set(access.MARTS_OUTSIDE_THE_RULE_LIST)
+    for entry in reach["roles"]:
+        if not entry["is_regional"]:
+            continue
+        open_to_it = set(entry["reachable_on_bigquery_but_not_through_the_view_layer"])
+        unexpected = sorted(open_to_it - outside)
+        if unexpected:
+            raise AssertionError(
+                f"{entry['role']} reaches {unexpected} on BigQuery and the view layer "
+                "refuses them, and they are not among the relations written down as "
+                "deliberately outside the rule list"
+            )

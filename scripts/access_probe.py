@@ -386,6 +386,12 @@ def survey_unprotected_copies(con) -> dict:
 
     return {
         "relations_in_marts_schema": len(relations),
+        # The names as well as the count. A count answers whether the survey
+        # looked at the schema. It cannot answer whether a relation in the
+        # schema appears in neither the rule list nor the list of deliberate
+        # omissions, and that question is the one a missing row access policy
+        # turns into a grant.
+        "relations_in_marts_schema_names": relations,
         "relations_carrying_the_quantity": len(carriers),
         "unprotected": sorted(c["relation"] for c in carriers if not c["in_rule_list"]),
         "carriers": carriers,

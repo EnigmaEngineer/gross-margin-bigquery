@@ -92,6 +92,21 @@
     ],
     "relations_carrying_the_quantity": 7,
     "relations_in_marts_schema": 13,
+    "relations_in_marts_schema_names": [
+      "alert_late_credit_arrival",
+      "credit_rollup_by_line",
+      "dim_product_version",
+      "fct_credit_allocation",
+      "fct_credit_memo",
+      "fct_gl_posting",
+      "fct_invoice_line_margin",
+      "margin_by_partner",
+      "margin_by_product_line",
+      "margin_by_vendor",
+      "recon_billing_to_gl",
+      "scan_margin_lines_clustered",
+      "scan_margin_lines_unclustered"
+    ],
     "unprotected": []
   },
   "not_covered_by_the_view_layer": {

@@ -1,0 +1,1019 @@
+{
+  "a_regional_role": {
+    "after": {
+      "narrowed": 2,
+      "read_whole": 5,
+      "refused": 6
+    },
+    "before_every_relation_carried_a_policy": {
+      "narrowed": 2,
+      "read_whole": 9,
+      "refused": 2
+    },
+    "what_before_means": "the same read with the rule list cut back to the relations carrying a region column, which is what it held until the completion pass. Derived here so the published pair is not a figure typed out of a run's output"
+  },
+  "a_regional_role_can_obtain_revenue": true,
+  "dataset_grant": {
+    "dataset_layer": "marts",
+    "for_each_expression": "{ for role in local.access_rules.roles : role.name => role }",
+    "granted_to_every_role_in_the_rule_list": true,
+    "iam_role": "roles/bigquery.dataViewer"
+  },
+  "marts_relations": [
+    "alert_late_credit_arrival",
+    "credit_rollup_by_line",
+    "dim_product_version",
+    "fct_credit_allocation",
+    "fct_credit_memo",
+    "fct_gl_posting",
+    "fct_invoice_line_margin",
+    "margin_by_partner",
+    "margin_by_product_line",
+    "margin_by_vendor",
+    "recon_billing_to_gl",
+    "scan_margin_lines_clustered",
+    "scan_margin_lines_unclustered"
+  ],
+  "rebuilt_by": "python3 scripts/reach_probe.py",
+  "regional_roles": [
+    "region_midwest_analyst",
+    "region_northeast_analyst",
+    "region_southeast_analyst",
+    "region_west_analyst"
+  ],
+  "relations_the_two_enforcements_disagree_on": [
+    "alert_late_credit_arrival",
+    "dim_product_version",
+    "fct_credit_allocation",
+    "fct_credit_memo",
+    "fct_gl_posting"
+  ],
+  "revenue_routes_open_to_a_regional_role": [
+    "fct_invoice_line_margin",
+    "margin_by_partner"
+  ],
+  "revenue_routes_open_to_a_regional_role_before": [
+    "fct_invoice_line_margin",
+    "margin_by_partner",
+    "margin_by_product_line",
+    "margin_by_vendor"
+  ],
+  "roles": [
+    {
+      "is_regional": false,
+      "may_read_cost": true,
+      "per_relation": {
+        "alert_late_credit_arrival": {
+          "columns_in_catalogue": 15,
+          "columns_the_mask_leaves": 15,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "credit_rollup_by_line": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "dim_product_version": {
+          "columns_in_catalogue": 7,
+          "columns_the_mask_leaves": 7,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_allocation": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_memo": {
+          "columns_in_catalogue": 22,
+          "columns_the_mask_leaves": 22,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_gl_posting": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_invoice_line_margin": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 18,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_partner": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_product_line": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_vendor": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 18,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "recon_billing_to_gl": {
+          "columns_in_catalogue": 17,
+          "columns_the_mask_leaves": 17,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "scan_margin_lines_clustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_unclustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": false
+        }
+      },
+      "reachable_on_bigquery_but_not_through_the_view_layer": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_in_the_marts_dataset": 13,
+      "relations_narrowed_by_a_policy": [],
+      "relations_reachable": 13,
+      "relations_read_whole": [
+        "alert_late_credit_arrival",
+        "credit_rollup_by_line",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting",
+        "fct_invoice_line_margin",
+        "margin_by_partner",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "recon_billing_to_gl",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_refused": [],
+      "relations_where_revenue_is_readable": [
+        "fct_invoice_line_margin",
+        "margin_by_partner",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "revenue_is_reachable": true,
+      "role": "finance_analyst"
+    },
+    {
+      "is_regional": false,
+      "may_read_cost": false,
+      "per_relation": {
+        "alert_late_credit_arrival": {
+          "columns_in_catalogue": 15,
+          "columns_the_mask_leaves": 15,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "credit_rollup_by_line": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "dim_product_version": {
+          "columns_in_catalogue": 7,
+          "columns_the_mask_leaves": 7,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_allocation": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_memo": {
+          "columns_in_catalogue": 22,
+          "columns_the_mask_leaves": 22,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_gl_posting": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_invoice_line_margin": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_partner": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 13,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_product_line": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_vendor": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "recon_billing_to_gl": {
+          "columns_in_catalogue": 17,
+          "columns_the_mask_leaves": 17,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": "true",
+          "the_view_layer_grants_this_relation": true
+        },
+        "scan_margin_lines_clustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_unclustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        }
+      },
+      "reachable_on_bigquery_but_not_through_the_view_layer": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_in_the_marts_dataset": 13,
+      "relations_narrowed_by_a_policy": [],
+      "relations_reachable": 11,
+      "relations_read_whole": [
+        "alert_late_credit_arrival",
+        "credit_rollup_by_line",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting",
+        "fct_invoice_line_margin",
+        "margin_by_partner",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "recon_billing_to_gl"
+      ],
+      "relations_refused": [
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_where_revenue_is_readable": [
+        "fct_invoice_line_margin",
+        "margin_by_partner",
+        "margin_by_product_line",
+        "margin_by_vendor"
+      ],
+      "revenue_is_reachable": true,
+      "role": "partner_ops"
+    },
+    {
+      "is_regional": true,
+      "may_read_cost": false,
+      "per_relation": {
+        "alert_late_credit_arrival": {
+          "columns_in_catalogue": 15,
+          "columns_the_mask_leaves": 15,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "credit_rollup_by_line": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "dim_product_version": {
+          "columns_in_catalogue": 7,
+          "columns_the_mask_leaves": 7,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_allocation": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_memo": {
+          "columns_in_catalogue": 22,
+          "columns_the_mask_leaves": 22,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_gl_posting": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_invoice_line_margin": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "region in ('midwest')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_partner": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 13,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "region in ('midwest')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_product_line": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "margin_by_vendor": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "recon_billing_to_gl": {
+          "columns_in_catalogue": 17,
+          "columns_the_mask_leaves": 17,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_clustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_unclustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        }
+      },
+      "reachable_on_bigquery_but_not_through_the_view_layer": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_in_the_marts_dataset": 13,
+      "relations_narrowed_by_a_policy": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "relations_reachable": 7,
+      "relations_read_whole": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_refused": [
+        "credit_rollup_by_line",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "recon_billing_to_gl",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_where_revenue_is_readable": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "revenue_is_reachable": true,
+      "role": "region_midwest_analyst"
+    },
+    {
+      "is_regional": true,
+      "may_read_cost": false,
+      "per_relation": {
+        "alert_late_credit_arrival": {
+          "columns_in_catalogue": 15,
+          "columns_the_mask_leaves": 15,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "credit_rollup_by_line": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "dim_product_version": {
+          "columns_in_catalogue": 7,
+          "columns_the_mask_leaves": 7,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_allocation": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_memo": {
+          "columns_in_catalogue": 22,
+          "columns_the_mask_leaves": 22,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_gl_posting": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_invoice_line_margin": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "region in ('northeast')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_partner": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 13,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "region in ('northeast')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_product_line": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "margin_by_vendor": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "recon_billing_to_gl": {
+          "columns_in_catalogue": 17,
+          "columns_the_mask_leaves": 17,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_clustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_unclustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        }
+      },
+      "reachable_on_bigquery_but_not_through_the_view_layer": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_in_the_marts_dataset": 13,
+      "relations_narrowed_by_a_policy": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "relations_reachable": 7,
+      "relations_read_whole": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_refused": [
+        "credit_rollup_by_line",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "recon_billing_to_gl",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_where_revenue_is_readable": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "revenue_is_reachable": true,
+      "role": "region_northeast_analyst"
+    },
+    {
+      "is_regional": true,
+      "may_read_cost": false,
+      "per_relation": {
+        "alert_late_credit_arrival": {
+          "columns_in_catalogue": 15,
+          "columns_the_mask_leaves": 15,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "credit_rollup_by_line": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "dim_product_version": {
+          "columns_in_catalogue": 7,
+          "columns_the_mask_leaves": 7,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_allocation": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_memo": {
+          "columns_in_catalogue": 22,
+          "columns_the_mask_leaves": 22,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_gl_posting": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_invoice_line_margin": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "region in ('southeast')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_partner": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 13,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "region in ('southeast')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_product_line": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "margin_by_vendor": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "recon_billing_to_gl": {
+          "columns_in_catalogue": 17,
+          "columns_the_mask_leaves": 17,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_clustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_unclustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        }
+      },
+      "reachable_on_bigquery_but_not_through_the_view_layer": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_in_the_marts_dataset": 13,
+      "relations_narrowed_by_a_policy": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "relations_reachable": 7,
+      "relations_read_whole": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_refused": [
+        "credit_rollup_by_line",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "recon_billing_to_gl",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_where_revenue_is_readable": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "revenue_is_reachable": true,
+      "role": "region_southeast_analyst"
+    },
+    {
+      "is_regional": true,
+      "may_read_cost": false,
+      "per_relation": {
+        "alert_late_credit_arrival": {
+          "columns_in_catalogue": 15,
+          "columns_the_mask_leaves": 15,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "credit_rollup_by_line": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "dim_product_version": {
+          "columns_in_catalogue": 7,
+          "columns_the_mask_leaves": 7,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_allocation": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 14,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_credit_memo": {
+          "columns_in_catalogue": 22,
+          "columns_the_mask_leaves": 22,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_gl_posting": {
+          "columns_in_catalogue": 12,
+          "columns_the_mask_leaves": 12,
+          "outcome": "unfiltered",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "fct_invoice_line_margin": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": "region in ('west')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_partner": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 13,
+          "outcome": "narrowed",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": "region in ('west')",
+          "the_view_layer_grants_this_relation": true
+        },
+        "margin_by_product_line": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "margin_by_vendor": {
+          "columns_in_catalogue": 18,
+          "columns_the_mask_leaves": 16,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "recon_billing_to_gl": {
+          "columns_in_catalogue": 17,
+          "columns_the_mask_leaves": 17,
+          "outcome": "refused",
+          "revenue_columns_readable": [],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_clustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        },
+        "scan_margin_lines_unclustered": {
+          "columns_in_catalogue": 14,
+          "columns_the_mask_leaves": 12,
+          "outcome": "refused",
+          "revenue_columns_readable": [
+            "extended_revenue_usd"
+          ],
+          "row_filter": null,
+          "the_view_layer_grants_this_relation": false
+        }
+      },
+      "reachable_on_bigquery_but_not_through_the_view_layer": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_in_the_marts_dataset": 13,
+      "relations_narrowed_by_a_policy": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "relations_reachable": 7,
+      "relations_read_whole": [
+        "alert_late_credit_arrival",
+        "dim_product_version",
+        "fct_credit_allocation",
+        "fct_credit_memo",
+        "fct_gl_posting"
+      ],
+      "relations_refused": [
+        "credit_rollup_by_line",
+        "margin_by_product_line",
+        "margin_by_vendor",
+        "recon_billing_to_gl",
+        "scan_margin_lines_clustered",
+        "scan_margin_lines_unclustered"
+      ],
+      "relations_where_revenue_is_readable": [
+        "fct_invoice_line_margin",
+        "margin_by_partner"
+      ],
+      "revenue_is_reachable": true,
+      "role": "region_west_analyst"
+    }
+  ],
+  "row_access_policy_count": {
+    "after": 22,
+    "before": 14
+  },
+  "row_access_policy_tables": [
+    "credit_rollup_by_line",
+    "fct_invoice_line_margin",
+    "margin_by_partner",
+    "margin_by_product_line",
+    "margin_by_vendor",
+    "recon_billing_to_gl",
+    "scan_margin_lines_clustered",
+    "scan_margin_lines_unclustered"
+  ],
+  "what_this_does_not_prove": "no BigQuery statement ran. This reads the committed Terraform and the rule list against the DuckDB catalogue, so it reports what the configuration says rather than what the engine does. The union semantic it reasons from is documentation and not an observation, which is the open question in the access notes"
+}

@@ -101,6 +101,54 @@
     },
     {
       "filter_predicate": "true",
+      "policy_id": "margin_by_vendor__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "margin_by_vendor"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "margin_by_vendor__partner_ops",
+      "role": "partner_ops",
+      "table_id": "margin_by_vendor"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "margin_by_product_line__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "margin_by_product_line"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "margin_by_product_line__partner_ops",
+      "role": "partner_ops",
+      "table_id": "margin_by_product_line"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "recon_billing_to_gl__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "recon_billing_to_gl"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "recon_billing_to_gl__partner_ops",
+      "role": "partner_ops",
+      "table_id": "recon_billing_to_gl"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "credit_rollup_by_line__finance_analyst",
+      "role": "finance_analyst",
+      "table_id": "credit_rollup_by_line"
+    },
+    {
+      "filter_predicate": "true",
+      "policy_id": "credit_rollup_by_line__partner_ops",
+      "role": "partner_ops",
+      "table_id": "credit_rollup_by_line"
+    },
+    {
+      "filter_predicate": "true",
       "policy_id": "scan_margin_lines_unclustered__finance_analyst",
       "role": "finance_analyst",
       "table_id": "scan_margin_lines_unclustered"

@@ -194,6 +194,48 @@ RELATIONS: tuple[Relation, ...] = (
 
 RELATIONS_BY_NAME = {relation.name: relation for relation in RELATIONS}
 
+# Marts the rule list does not cover, with the reason each one is left out.
+#
+# This exists because of what `tables_with_row_policies` used to do. A relation
+# absent from the rule list gets no row access policy, and a table with no
+# policy is filtered by nothing, so absence from this module is not neutral. It
+# is a grant. Writing the omissions down is what makes the next mart a decision
+# rather than a default, and a check fails when the marts schema holds a
+# relation that is in neither list.
+#
+# None of these five is settled. Three of them carry credit and ledger amounts
+# at document grain, which is the same commercial sensitivity recorded against
+# credit_rollup_by_line, and that relation IS refused to a regional role. So the
+# consistent answer is probably to refuse these too. That changes what partner
+# operations can report on as well, which makes it a product call rather than a
+# correction, and it is not one to make unattended on a completion day.
+MARTS_OUTSIDE_THE_RULE_LIST: dict[str, str] = {
+    "dim_product_version": (
+        "a product dimension with no money on it. Product name, line and the "
+        "validity window. Nothing here recovers cost and nothing is commercially "
+        "sensitive, so it is the one omission that is actually comfortable"
+    ),
+    "fct_credit_memo": (
+        "credit amounts at document grain with no region column. Not settled. "
+        "A credit amount is as sensitive as the rollup of it, and the rollup is "
+        "refused"
+    ),
+    "fct_credit_allocation": (
+        "the same credit amounts spread over lines. Carries a line id, so a "
+        "region could be reached through the line table, which makes it the "
+        "weakest of the five rather than the most obvious"
+    ),
+    "fct_gl_posting": (
+        "ledger postings at account grain. No region to filter on, the same "
+        "reason recorded against recon_billing_to_gl, which is in the rule list "
+        "and refused. Not settled"
+    ),
+    "alert_late_credit_arrival": (
+        "one row per credit that arrived outside the window. Operational rather "
+        "than commercial, and it names credit ids and amounts"
+    ),
+}
+
 # The line table's region is null exactly where the invoice carries no partner.
 # Measured rather than assumed, by tests/test_access.py against the corpus.
 UNREACHABLE_BY_REGION = "region is null"
@@ -265,13 +307,30 @@ def row_predicate(relation: Relation, role: Role) -> str | None:
 
 
 def tables_with_row_policies() -> tuple[Relation, ...]:
-    """The relations that carry a row access policy at all.
+    """The relations that carry a row access policy at all, which is every one.
 
-    A relation with no region column carries none, and access to it is decided
-    by whether the role holds the dataset at all. Mixing the two mechanisms on
-    one table is how a reader ends up unable to say which one refused them.
+    This used to return only the relations with a region column, and the reason
+    written here was that access to a finance wide relation is decided by
+    whether the role holds the dataset at all. That premise was false the whole
+    time. There is one dataset grant in `infra/access.tf` and every role in the
+    rule list is on it, so holding the dataset was never a question any relation
+    could be refused by.
+
+    The consequence is the thing worth remembering. A table carrying no row
+    access policy is filtered by nothing, so leaving the finance wide relations
+    out did not refuse them to a regional role. It published them whole,
+    across every region, with only the column mask in the way. Measured by
+    `scripts/reach_probe.py` against the committed Terraform and the catalogue,
+    which found nine relations open on BigQuery that the view layer refuses.
+
+    So every relation in the rule list now carries a policy and the union does
+    the refusing. The point the old comment was reaching for still stands and it
+    is now a property of the predicates rather than of which tables appear: a
+    reader can tell a row filter from a refusal, because a refusal is the
+    absence of a policy for that principal and a filter is a predicate naming
+    its regions.
     """
-    return tuple(r for r in RELATIONS if r.region_column is not None)
+    return RELATIONS
 
 
 def bigquery_filter_predicate(relation: Relation, role: Role) -> str | None:
@@ -291,8 +350,6 @@ def bigquery_filter_predicate(relation: Relation, role: Role) -> str | None:
     What runs locally cannot prove this, because the engine that behaves this
     way has never been connected to.
     """
-    if relation not in tables_with_row_policies():
-        return None
     if not relation.reporting_surface:
         # One policy, granted to the roles that may read cost. Every other
         # principal falls through the union with no policy of its own and reads
@@ -300,6 +357,13 @@ def bigquery_filter_predicate(relation: Relation, role: Role) -> str | None:
         # everybody would read as more deliberate and it would also be a policy
         # somebody could widen by editing one word.
         return "true" if role.may_read_cost else None
+    if relation.region_column is None:
+        # Finance wide. The same refusal by absence as the layout pair above,
+        # keyed on whether the role is regional rather than on cost, because
+        # partner_ops crosses regions and belongs on these tables. This is the
+        # case that was missing, and missing it meant a regional role read
+        # every one of them unfiltered.
+        return None if role.is_regional else "true"
     if not role.is_regional:
         return "true"
     quoted = ", ".join(f"'{region}'" for region in role.regions or ())

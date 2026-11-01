@@ -223,3 +223,43 @@ durable fix is running the probe in continuous integration rather than by hand.
 **A role with two regions is refused rather than supported.** The predicate
 builds an `in` list and would accept one, and nothing in the product asks for
 it yet, so a check asserts every regional role carries exactly one region.
+
+## The grant was not implementing the refusal
+
+Found on the completion pass and moved here from the README, which keeps the
+before and after counts and sends a reader to this section for the mechanism.
+
+Found on the completion pass by reading `infra/access.tf` against the catalogue
+rather than by running anything. `scripts/reach_probe.py` does it.
+
+`grants_for` refuses a regional role every mart with no region column, and on
+DuckDB that refusal is real, because the role simply has no view. On BigQuery the
+refusal was supposed to come from the row access policy union, where a principal
+holding no policy on a table that carries policies reads nothing. The flaw is in
+the other half of that sentence. A table carrying no policy at all is filtered by
+nothing, and there is one dataset grant in `access.tf` that every role is on.
+
+So the finance wide marts, which carried no policy because the rule list only
+created policies for tables with a region column, were readable in full by every
+regional role. Nine of the thirteen marts. The probe measured it before the fix
+and after.
+
+| | regional role reads whole | narrowed by a policy | refused |
+|---|---|---|---|
+| before | 9 | 2 | 2 |
+| after | 5 | 2 | 6 |
+
+The fix is that every relation in the rule list now carries a policy and the
+union does the refusing, which took the policy count from 14 to 22. The comment
+that had recorded the old decision said access to a finance wide relation is
+decided by whether the role holds the dataset at all, and that premise was false
+for as long as it was written down, because holding the dataset was never a
+question any relation could be refused by.
+
+Five marts are still readable whole by a regional role and they are the ones the
+access model never classified. They are written down in
+`MARTS_OUTSIDE_THE_RULE_LIST` with a reason each, and a check fails when a mart
+appears in neither list, because absence from the rule list is a grant rather
+than a default. Three of the five carry credit or ledger amounts at document
+grain and are probably wrong to leave open. That is a product call and not a
+correction, so it is in the limitations.
