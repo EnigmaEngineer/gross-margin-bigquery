@@ -1,0 +1,30 @@
+{
+  "_what_this_is": "Published Google Cloud list prices, transcribed from the pages named in source_urls. These are NOT measurements. Nothing in this repository has ever been applied, so no bill exists and no figure here was observed. scripts/cost_model.py multiplies these out against the shape infra/composer.tf declares, and every figure it produces inherits this caveat.",
+  "_region_caveat": "The pricing pages render a region selector and the price rows are not tagged per region in the page text. Iowa (us-central1) is first in both region lists and these values were read with that default in place, so they are recorded as us-central1 and that attribution is inferred from the page layout rather than stated by it.",
+  "bigquery": {
+    "active_logical_storage_usd_per_gibibyte_hour": 0.000031507,
+    "free_query_tebibytes_per_month": 1,
+    "free_storage_gibibytes_per_month": 10,
+    "long_term_logical_storage_usd_per_gibibyte_hour": 0.000021918,
+    "on_demand_query_usd_per_tebibyte": 6.25
+  },
+  "composer_generation_2": {
+    "_note": "infra/composer.tf declares a google_composer_environment with an explicit workloads_config, which is the Composer 2 shape, so the Gen 2 price list is the one that applies. Gen 3 meters a single DCU hour SKU instead and would need a different model.",
+    "compute_memory_usd_per_gibibyte_hour": 0.005,
+    "compute_storage_usd_per_gibibyte_hour": 0.0002,
+    "compute_vcpu_usd_per_hour": 0.045,
+    "database_storage_usd_per_gibibyte_hour": 0.000232877,
+    "environment_fee_usd_per_hour": {
+      "ENVIRONMENT_SIZE_LARGE": 0.85,
+      "ENVIRONMENT_SIZE_MEDIUM": 0.55,
+      "ENVIRONMENT_SIZE_SMALL": 0.35
+    }
+  },
+  "currency": "USD",
+  "region_recorded": "us-central1",
+  "retrieved_on": "2026-11-01",
+  "source_urls": [
+    "https://cloud.google.com/composer/pricing",
+    "https://cloud.google.com/bigquery/pricing"
+  ]
+}

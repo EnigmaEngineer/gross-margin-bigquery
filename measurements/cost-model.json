@@ -1,0 +1,78 @@
+{
+  "composer": {
+    "components": {
+      "scheduler": {
+        "count": 1.0,
+        "max_count": null,
+        "memory_gibibytes": 2.0,
+        "storage_gibibytes": 1.0,
+        "vcpu": 0.5
+      },
+      "web_server": {
+        "count": 1.0,
+        "max_count": null,
+        "memory_gibibytes": 2.0,
+        "storage_gibibytes": 1.0,
+        "vcpu": 0.5
+      },
+      "worker": {
+        "count": 1.0,
+        "max_count": 2.0,
+        "memory_gibibytes": 2.0,
+        "storage_gibibytes": 1.0,
+        "vcpu": 0.5
+      }
+    },
+    "declared_memory_gibibytes": 6.0,
+    "declared_storage_gibibytes": 3.0,
+    "declared_vcpu": 1.5,
+    "environment_fee_share_of_the_day_pct": 78.11,
+    "environment_size": "ENVIRONMENT_SIZE_SMALL",
+    "not_priced_here": {
+      "database_storage": "the price list carries a per gibibyte hour rate for the Cloud SQL instance and the size of that instance is a property of an environment that was never created, so there is no quantity to multiply",
+      "network_egress": "the page says VPC network rates and no quantity exists",
+      "worker_scale_out": "the worker maximum is 2.0 and only the minimum is priced, because the second worker bills on a day a backfill needs it rather than every day"
+    },
+    "share_that_bills_while_idle_pct": 100.0,
+    "usd_per_30_days": 322.63,
+    "usd_per_day": 10.7544,
+    "usd_per_day_by_term": {
+      "environment_fee_usd": 8.4,
+      "memory_usd": 0.72,
+      "storage_usd": 0.0144,
+      "vcpu_usd": 1.62
+    },
+    "why_idle_is_the_whole_bill": "every term above is a rate on a resource that exists. The scheduler keeps running between DAG runs. So does the web server, and so does the floor worker. The environment fee is charged for the environment rather than for a task, so none of this is a function of how often the pipeline fires"
+  },
+  "daily_total_usd_for_the_terms_that_have_a_quantity": 10.7544,
+  "nothing_in_infra_has_been_applied": true,
+  "price_list": {
+    "region_caveat": "The pricing pages render a region selector and the price rows are not tagged per region in the page text. Iowa (us-central1) is first in both region lists and these values were read with that default in place, so they are recorded as us-central1 and that attribution is inferred from the page layout rather than stated by it.",
+    "region_recorded": "us-central1",
+    "retrieved_on": "2026-11-01",
+    "source_urls": [
+      "https://cloud.google.com/composer/pricing",
+      "https://cloud.google.com/bigquery/pricing"
+    ]
+  },
+  "queries": {
+    "bytes_scanned_per_run": null,
+    "corpus_bytes_are_not_bigquery_logical_bytes": "the corpus figure is the size of the landing CSVs on this machine. BigQuery charges on logical or physical bytes of the loaded tables and those are a different number, so this bounds the storage term below the free tier and is not the storage term",
+    "corpus_csv_bytes": 2957980,
+    "corpus_gibibytes": 0.002755,
+    "corpus_is_inside_the_storage_free_tier": true,
+    "free_tebibytes_per_month": 1,
+    "on_demand_usd_per_tebibyte": 6.25,
+    "storage_free_gibibytes_per_month": 10,
+    "usd_per_run": null,
+    "why_there_is_no_figure": "a dry run returns bytes scanned and a dry run needs a billing enabled project. No statement from this repository has executed against BigQuery, so the quantity this rate multiplies does not exist. See scripts/scan_probe.py and docs/bytes-scanned.md"
+  },
+  "rebuilt_by": "python3 scripts/cost_model.py",
+  "terms_with_no_quantity": [
+    "bytes scanned per run",
+    "Cloud SQL database storage",
+    "worker scale out",
+    "network egress"
+  ],
+  "this_is_a_price_list_multiplied_out_and_not_a_measurement": true
+}
